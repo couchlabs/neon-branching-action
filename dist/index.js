@@ -96,7 +96,7 @@ function getBranches() {
 function deleteBranch(branch) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield (0, node_fetch_1.default)(`BRANCHES_API_URL/${branch.id}`, Object.assign({ method: "DELETE" }, API_OPTIONS));
+            yield (0, node_fetch_1.default)(`${BRANCHES_API_URL}/${branch.id}`, Object.assign({ method: "DELETE" }, API_OPTIONS));
         }
         catch (error) {
             core.setFailed(error.message);

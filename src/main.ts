@@ -57,7 +57,7 @@ async function getBranches() {
 
 async function deleteBranch(branch: { name?: string; id?: any }) {
   try {
-    await fetch(`BRANCHES_API_URL/${branch.id}`, {
+    await fetch(`${BRANCHES_API_URL}/${branch.id}`, {
       method: "DELETE",
       ...API_OPTIONS,
     });
