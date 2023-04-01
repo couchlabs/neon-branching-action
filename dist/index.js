@@ -63,9 +63,11 @@ function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const { branches } = yield getBranches();
-            const branchExist = doesBranchExist(branches);
-            console.log("get /branches response", JSON.stringify(branches, undefined, 2));
-            console.log("Branch already exist? ", branchExist);
+            const existingBranch = doesBranchExist(branches);
+            if (existingBranch != null) {
+                yield deleteBranch(existingBranch);
+            }
+            // create
             const time = new Date().toTimeString();
             core.setOutput("time", time);
             // Get the JSON webhook payload for the event that triggered the workflow
@@ -91,8 +93,18 @@ function getBranches() {
         }
     });
 }
+function deleteBranch(branch) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            yield (0, node_fetch_1.default)(`BRANCHES_API_URL/${branch.id}`, Object.assign({ method: "DELETE" }, API_OPTIONS));
+        }
+        catch (error) {
+            core.setFailed(error.message);
+        }
+    });
+}
 function doesBranchExist(branches) {
-    return branches.find((branch) => branch.name === BRANCH_NAME) != null;
+    return branches.find((branch) => branch.name === BRANCH_NAME);
 }
 
 

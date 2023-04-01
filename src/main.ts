@@ -26,12 +26,12 @@ const API_OPTIONS = {
 async function run(): Promise<void> {
   try {
     const { branches } = await getBranches();
-    const branchExist = doesBranchExist(branches);
-    console.log(
-      "get /branches response",
-      JSON.stringify(branches, undefined, 2)
-    );
-    console.log("Branch already exist? ", branchExist);
+    const existingBranch = doesBranchExist(branches);
+    if (existingBranch != null) {
+      await deleteBranch(existingBranch);
+    }
+
+    // create
     const time = new Date().toTimeString();
     core.setOutput("time", time);
     // Get the JSON webhook payload for the event that triggered the workflow
@@ -55,6 +55,17 @@ async function getBranches() {
   }
 }
 
+async function deleteBranch(branch: { name?: string; id?: any }) {
+  try {
+    await fetch(`BRANCHES_API_URL/${branch.id}`, {
+      method: "DELETE",
+      ...API_OPTIONS,
+    });
+  } catch (error: any) {
+    core.setFailed(error.message);
+  }
+}
+
 function doesBranchExist(branches: Branches) {
-  return branches.find((branch) => branch.name === BRANCH_NAME) != null;
+  return branches.find((branch) => branch.name === BRANCH_NAME);
 }
