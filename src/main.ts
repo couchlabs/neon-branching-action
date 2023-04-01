@@ -23,12 +23,12 @@ const HEADERS = {
 async function run(): Promise<void> {
   try {
     const branches = await getBranches();
-    const branchExist = doesBranchExist(branches as Branches, BRANCH_NAME);
+    // const branchExist = doesBranchExist(branches as Branches, BRANCH_NAME);
     console.log(
       "get /branches response",
       JSON.stringify(branches, undefined, 2)
     );
-    console.log("Branch already exist? ", branchExist);
+    // console.log("Branch already exist? ", branchExist);
     const time = new Date().toTimeString();
     core.setOutput("time", time);
     // Get the JSON webhook payload for the event that triggered the workflow
