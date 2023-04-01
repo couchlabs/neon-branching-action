@@ -63,16 +63,16 @@ function run() {
                     accept: "application/json",
                     authorization: `Bearer ${API_KEY}`,
                 },
-                // body: JSON.stringify({
-                //   branch: {
-                //     name: BRANCH_NAME,
-                //   },
-                //   endpoints: [
-                //     {
-                //       type: "read_write",
-                //     },
-                //   ],
-                // }),
+                body: JSON.stringify({
+                    branch: {
+                        name: BRANCH_NAME,
+                    },
+                    endpoints: [
+                        {
+                            type: "read_write",
+                        },
+                    ],
+                }),
             });
             const data = yield response.json();
             console.log("/branches response", JSON.stringify(data, undefined, 2));

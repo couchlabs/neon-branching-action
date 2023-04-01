@@ -22,16 +22,16 @@ async function run(): Promise<void> {
           accept: "application/json",
           authorization: `Bearer ${API_KEY}`,
         },
-        // body: JSON.stringify({
-        //   branch: {
-        //     name: BRANCH_NAME,
-        //   },
-        //   endpoints: [
-        //     {
-        //       type: "read_write",
-        //     },
-        //   ],
-        // }),
+        body: JSON.stringify({
+          branch: {
+            name: BRANCH_NAME,
+          },
+          endpoints: [
+            {
+              type: "read_write",
+            },
+          ],
+        }),
       }
     );
     const data = await response.json();
