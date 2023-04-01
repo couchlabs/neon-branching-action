@@ -2,6 +2,9 @@ import * as core from "@actions/core";
 import * as github from "@actions/github";
 import fetch from "node-fetch";
 
+type Branch = { name: string };
+type Branches = Array<Branch>;
+
 // Action inputs, defined in action metadata file:
 // - api_key     : https://neon.tech/docs/manage/api-keys
 // - project_id  : neon.tech project id
@@ -20,10 +23,12 @@ const HEADERS = {
 async function run(): Promise<void> {
   try {
     const branches = await getBranches();
+    const branchExist = doesBranchExist(branches as Branches, BRANCH_NAME);
     console.log(
       "get /branches response",
       JSON.stringify(branches, undefined, 2)
     );
+    console.log("Branch already exist? ", branchExist);
     const time = new Date().toTimeString();
     core.setOutput("time", time);
     // Get the JSON webhook payload for the event that triggered the workflow
@@ -45,6 +50,10 @@ async function getBranches() {
   } catch (error: any) {
     core.setFailed(error.message);
   }
+}
+
+function doesBranchExist(branches: Branches, branchName: string) {
+  return branches.find((branch) => branch.name === branchName) != null;
 }
 
 run();

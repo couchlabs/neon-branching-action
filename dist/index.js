@@ -61,7 +61,9 @@ function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const branches = yield getBranches();
+            const branchExist = doesBranchExist(branches, BRANCH_NAME);
             console.log("get /branches response", JSON.stringify(branches, undefined, 2));
+            console.log("Branch already exist? ", branchExist);
             const time = new Date().toTimeString();
             core.setOutput("time", time);
             // Get the JSON webhook payload for the event that triggered the workflow
@@ -87,6 +89,9 @@ function getBranches() {
             core.setFailed(error.message);
         }
     });
+}
+function doesBranchExist(branches, branchName) {
+    return branches.find((branch) => branch.name === branchName) != null;
 }
 run();
 
