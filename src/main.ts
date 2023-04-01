@@ -5,8 +5,9 @@ import fetch from "node-fetch";
 async function run(): Promise<void> {
   try {
     // Action inputs, defined in action metadata file:
-    // - api_key    : https://neon.tech/docs/manage/api-keys
-    // - project_id : neon.tech project id
+    // - api_key     : https://neon.tech/docs/manage/api-keys
+    // - project_id  : neon.tech project id
+    // - branch_name : name for the new branch
     const API_KEY = core.getInput("api_key");
     const PROJECT_ID = core.getInput("project_id");
     const BRANCH_NAME = core.getInput("branch_name");
@@ -14,7 +15,6 @@ async function run(): Promise<void> {
     const response = await fetch(
       `https://console.neon.tech/api/v2/projects/${PROJECT_ID}/branches`,
       {
-        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
@@ -24,9 +24,11 @@ async function run(): Promise<void> {
           branch: {
             name: BRANCH_NAME,
           },
-          endpoints: {
-            type: "read_write",
-          },
+          endpoints: [
+            {
+              type: "read_write",
+            },
+          ],
         }),
       }
     );

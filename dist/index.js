@@ -48,13 +48,13 @@ function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             // Action inputs, defined in action metadata file:
-            // - api_key    : https://neon.tech/docs/manage/api-keys
-            // - project_id : neon.tech project id
+            // - api_key     : https://neon.tech/docs/manage/api-keys
+            // - project_id  : neon.tech project id
+            // - branch_name : name for the new branch
             const API_KEY = core.getInput("api_key");
             const PROJECT_ID = core.getInput("project_id");
             const BRANCH_NAME = core.getInput("branch_name");
             const response = yield (0, node_fetch_1.default)(`https://console.neon.tech/api/v2/projects/${PROJECT_ID}/branches`, {
-                method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     Accept: "application/json",
@@ -64,9 +64,11 @@ function run() {
                     branch: {
                         name: BRANCH_NAME,
                     },
-                    endpoints: {
-                        type: "read_write",
-                    },
+                    endpoints: [
+                        {
+                            type: "read_write",
+                        },
+                    ],
                 }),
             });
             const data = yield response.json();
