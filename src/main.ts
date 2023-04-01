@@ -11,25 +11,27 @@ async function run(): Promise<void> {
     const API_KEY = core.getInput("api_key");
     const PROJECT_ID = core.getInput("project_id");
     const BRANCH_NAME = core.getInput("branch_name");
-
+    console.log("API_KEY", API_KEY);
+    console.log("PROJECT_ID", PROJECT_ID);
     const response = await fetch(
       `https://console.neon.tech/api/v2/projects/${PROJECT_ID}/branches`,
       {
+        method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${API_KEY}`,
+          "content-type": "application/json",
+          accept: "application/json",
+          authorization: `Bearer ${API_KEY}`,
         },
-        body: JSON.stringify({
-          branch: {
-            name: BRANCH_NAME,
-          },
-          endpoints: [
-            {
-              type: "read_write",
-            },
-          ],
-        }),
+        // body: JSON.stringify({
+        //   branch: {
+        //     name: BRANCH_NAME,
+        //   },
+        //   endpoints: [
+        //     {
+        //       type: "read_write",
+        //     },
+        //   ],
+        // }),
       }
     );
     const data = await response.json();

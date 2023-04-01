@@ -54,22 +54,25 @@ function run() {
             const API_KEY = core.getInput("api_key");
             const PROJECT_ID = core.getInput("project_id");
             const BRANCH_NAME = core.getInput("branch_name");
+            console.log("API_KEY", API_KEY);
+            console.log("PROJECT_ID", PROJECT_ID);
             const response = yield (0, node_fetch_1.default)(`https://console.neon.tech/api/v2/projects/${PROJECT_ID}/branches`, {
+                method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                    Authorization: `Bearer ${API_KEY}`,
+                    "content-type": "application/json",
+                    accept: "application/json",
+                    authorization: `Bearer ${API_KEY}`,
                 },
-                body: JSON.stringify({
-                    branch: {
-                        name: BRANCH_NAME,
-                    },
-                    endpoints: [
-                        {
-                            type: "read_write",
-                        },
-                    ],
-                }),
+                // body: JSON.stringify({
+                //   branch: {
+                //     name: BRANCH_NAME,
+                //   },
+                //   endpoints: [
+                //     {
+                //       type: "read_write",
+                //     },
+                //   ],
+                // }),
             });
             const data = yield response.json();
             console.log("/branches response", JSON.stringify(data, undefined, 2));
