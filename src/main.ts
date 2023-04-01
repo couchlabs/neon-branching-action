@@ -4,6 +4,7 @@ import fetch from "node-fetch";
 
 type Branch = { name: string };
 type Branches = Array<Branch>;
+type BranchesResponse = { branches: Branches };
 
 // Action inputs, defined in action metadata file:
 // - api_key     : https://neon.tech/docs/manage/api-keys
@@ -14,21 +15,23 @@ const PROJECT_ID = core.getInput("project_id");
 const BRANCH_NAME = core.getInput("branch_name");
 
 const BRANCHES_API_URL = `https://console.neon.tech/api/v2/projects/${PROJECT_ID}/branches`;
-const HEADERS = {
-  "content-type": "application/json",
-  accept: "application/json",
-  authorization: `Bearer ${API_KEY}`,
+const API_OPTIONS = {
+  headers: {
+    "content-type": "application/json",
+    accept: "application/json",
+    authorization: `Bearer ${API_KEY}`,
+  },
 };
 
 async function run(): Promise<void> {
   try {
-    const branches = await getBranches();
-    // const branchExist = doesBranchExist(branches as Branches, BRANCH_NAME);
+    const { branches } = await getBranches();
+    const branchExist = doesBranchExist(branches);
     console.log(
       "get /branches response",
       JSON.stringify(branches, undefined, 2)
     );
-    // console.log("Branch already exist? ", branchExist);
+    console.log("Branch already exist? ", branchExist);
     const time = new Date().toTimeString();
     core.setOutput("time", time);
     // Get the JSON webhook payload for the event that triggered the workflow
@@ -39,21 +42,19 @@ async function run(): Promise<void> {
   }
 }
 
+run();
+
+// Helper functions
 async function getBranches() {
   try {
-    console.log("API_KEY", API_KEY);
-    console.log("PROJECT_ID", PROJECT_ID);
-    const response = await fetch(BRANCHES_API_URL, {
-      headers: HEADERS,
-    });
-    return response.json();
+    const response = await fetch(BRANCHES_API_URL, API_OPTIONS);
+    return response.json().then((data) => data as BranchesResponse);
   } catch (error: any) {
     core.setFailed(error.message);
+    return { branches: [] };
   }
 }
 
-function doesBranchExist(branches: Branches, branchName: string) {
-  return branches.find((branch) => branch.name === branchName) != null;
+function doesBranchExist(branches: Branches) {
+  return branches.find((branch) => branch.name === BRANCH_NAME) != null;
 }
-
-run();

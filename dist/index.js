@@ -52,18 +52,20 @@ const API_KEY = core.getInput("api_key");
 const PROJECT_ID = core.getInput("project_id");
 const BRANCH_NAME = core.getInput("branch_name");
 const BRANCHES_API_URL = `https://console.neon.tech/api/v2/projects/${PROJECT_ID}/branches`;
-const HEADERS = {
-    "content-type": "application/json",
-    accept: "application/json",
-    authorization: `Bearer ${API_KEY}`,
+const API_OPTIONS = {
+    headers: {
+        "content-type": "application/json",
+        accept: "application/json",
+        authorization: `Bearer ${API_KEY}`,
+    },
 };
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const branches = yield getBranches();
-            // const branchExist = doesBranchExist(branches as Branches, BRANCH_NAME);
+            const { branches } = yield getBranches();
+            const branchExist = doesBranchExist(branches);
             console.log("get /branches response", JSON.stringify(branches, undefined, 2));
-            // console.log("Branch already exist? ", branchExist);
+            console.log("Branch already exist? ", branchExist);
             const time = new Date().toTimeString();
             core.setOutput("time", time);
             // Get the JSON webhook payload for the event that triggered the workflow
@@ -75,25 +77,23 @@ function run() {
         }
     });
 }
+run();
+// Helper functions
 function getBranches() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            console.log("API_KEY", API_KEY);
-            console.log("PROJECT_ID", PROJECT_ID);
-            const response = yield (0, node_fetch_1.default)(BRANCHES_API_URL, {
-                headers: HEADERS,
-            });
-            return response.json();
+            const response = yield (0, node_fetch_1.default)(BRANCHES_API_URL, API_OPTIONS);
+            return response.json().then((data) => data);
         }
         catch (error) {
             core.setFailed(error.message);
+            return { branches: [] };
         }
     });
 }
-function doesBranchExist(branches, branchName) {
-    return branches.find((branch) => branch.name === branchName) != null;
+function doesBranchExist(branches) {
+    return branches.find((branch) => branch.name === BRANCH_NAME) != null;
 }
-run();
 
 
 /***/ }),
