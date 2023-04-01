@@ -44,43 +44,44 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const node_fetch_1 = __importDefault(__nccwpck_require__(4429));
+// Action inputs, defined in action metadata file:
+// - api_key     : https://neon.tech/docs/manage/api-keys
+// - project_id  : neon.tech project id
+// - branch_name : name for the new branch
+const API_KEY = core.getInput("api_key");
+const PROJECT_ID = core.getInput("project_id");
+const BRANCH_NAME = core.getInput("branch_name");
+const BRANCHES_API_URL = `https://console.neon.tech/api/v2/projects/${PROJECT_ID}/branches`;
+const HEADERS = {
+    "content-type": "application/json",
+    accept: "application/json",
+    authorization: `Bearer ${API_KEY}`,
+};
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            // Action inputs, defined in action metadata file:
-            // - api_key     : https://neon.tech/docs/manage/api-keys
-            // - project_id  : neon.tech project id
-            // - branch_name : name for the new branch
-            const API_KEY = core.getInput("api_key");
-            const PROJECT_ID = core.getInput("project_id");
-            const BRANCH_NAME = core.getInput("branch_name");
-            console.log("API_KEY", API_KEY);
-            console.log("PROJECT_ID", PROJECT_ID);
-            const response = yield (0, node_fetch_1.default)(`https://console.neon.tech/api/v2/projects/${PROJECT_ID}/branches`, {
-                method: "POST",
-                headers: {
-                    "content-type": "application/json",
-                    accept: "application/json",
-                    authorization: `Bearer ${API_KEY}`,
-                },
-                body: JSON.stringify({
-                    branch: {
-                        name: BRANCH_NAME,
-                    },
-                    endpoints: [
-                        {
-                            type: "read_write",
-                        },
-                    ],
-                }),
-            });
-            const data = yield response.json();
-            console.log("/branches response", JSON.stringify(data, undefined, 2));
+            const branches = yield getBranches();
+            console.log("get /branches response", JSON.stringify(branches, undefined, 2));
             const time = new Date().toTimeString();
             core.setOutput("time", time);
             // Get the JSON webhook payload for the event that triggered the workflow
             // const payload = JSON.stringify(github.context.payload, undefined, 2);
             // console.log(`The event payload: ${payload}`);
+        }
+        catch (error) {
+            core.setFailed(error.message);
+        }
+    });
+}
+function getBranches() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            console.log("API_KEY", API_KEY);
+            console.log("PROJECT_ID", PROJECT_ID);
+            const response = yield (0, node_fetch_1.default)(BRANCHES_API_URL, {
+                headers: HEADERS,
+            });
+            return response.json();
         }
         catch (error) {
             core.setFailed(error.message);
