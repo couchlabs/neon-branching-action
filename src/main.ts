@@ -11,7 +11,7 @@ async function run(): Promise<void> {
     const PROJECT_ID = core.getInput("project_id");
     const BRANCH_NAME = core.getInput("branch_name");
 
-    const res = await fetch(
+    const response = await fetch(
       `https://console.neon.tech/api/v2/projects/${PROJECT_ID}/branches`,
       {
         method: "POST",
@@ -30,13 +30,13 @@ async function run(): Promise<void> {
         }),
       }
     );
-
-    console.log(`branches ${res}`);
+    const data = await response.json();
+    console.log("/branches response", JSON.stringify(data, undefined, 2));
     const time = new Date().toTimeString();
     core.setOutput("time", time);
     // Get the JSON webhook payload for the event that triggered the workflow
-    const payload = JSON.stringify(github.context.payload, undefined, 2);
-    console.log(`The event payload: ${payload}`);
+    // const payload = JSON.stringify(github.context.payload, undefined, 2);
+    // console.log(`The event payload: ${payload}`);
   } catch (error: any) {
     core.setFailed(error.message);
   }
