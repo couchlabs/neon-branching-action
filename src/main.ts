@@ -2,9 +2,10 @@ import * as core from "@actions/core";
 import * as github from "@actions/github";
 import fetch from "node-fetch";
 
-type Branch = { name: string };
+type Branch = { name?: string; id?: string };
 type Branches = Array<Branch>;
 type BranchesResponse = { branches: Branches };
+type BrancheResponse = { branch: Branch };
 
 // Action inputs, defined in action metadata file:
 // - api_key     : https://neon.tech/docs/manage/api-keys
@@ -28,8 +29,12 @@ async function run(): Promise<void> {
     const { branches } = await getBranches();
     const existingBranch = doesBranchExist(branches);
     if (existingBranch != null) {
+      console.log(`Deleting existing DB branch "${existingBranch.name}"`);
       await deleteBranch(existingBranch);
     }
+    console.log(`Creatomg DB branch "${BRANCH_NAME}"`);
+    const newBranch = await createBranch();
+    console.log("Created DB branch", JSON.stringify(newBranch, undefined, 2));
 
     // create
     const time = new Date().toTimeString();
@@ -55,7 +60,7 @@ async function getBranches() {
   }
 }
 
-async function deleteBranch(branch: { name?: string; id?: any }) {
+async function deleteBranch(branch: Branch) {
   try {
     await fetch(`${BRANCHES_API_URL}/${branch.id}`, {
       method: "DELETE",
@@ -63,6 +68,23 @@ async function deleteBranch(branch: { name?: string; id?: any }) {
     });
   } catch (error: any) {
     core.setFailed(error.message);
+  }
+}
+
+async function createBranch() {
+  try {
+    const response = await fetch(BRANCHES_API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        branch: { name: BRANCH_NAME },
+        endpoints: [{ type: "read_write" }],
+      }),
+      ...API_OPTIONS,
+    });
+    return response.json().then((data) => data as BrancheResponse);
+  } catch (error: any) {
+    core.setFailed(error.message);
+    return {};
   }
 }
 
