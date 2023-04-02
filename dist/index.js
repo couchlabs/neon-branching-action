@@ -70,8 +70,9 @@ function run() {
                 yield sleep(1000);
             }
             console.log(`Creating DB branch "${BRANCH_NAME}"`);
-            const { branch } = yield createBranch();
-            console.log("Created DB branch", JSON.stringify(branch, undefined, 2));
+            const { branch, endpoints } = yield createBranch();
+            console.log("branch", JSON.stringify(branch, undefined, 2));
+            console.log("endpoints", JSON.stringify(endpoints, undefined, 2));
             // create
             const time = new Date().toTimeString();
             core.setOutput("time", time);
@@ -113,13 +114,13 @@ function createBranch() {
         try {
             const response = yield (0, node_fetch_1.default)(BRANCHES_API_URL, Object.assign({ method: "POST", body: JSON.stringify({
                     branch: { name: BRANCH_NAME },
-                    // endpoints: [{ type: "read_write" }],
+                    endpoints: [{ type: "read_write" }],
                 }) }, API_OPTIONS));
             return response.json().then((data) => data);
         }
         catch (error) {
             core.setFailed(error.message);
-            return { branch: {} };
+            return { branch: {}, endpoints: [] };
         }
     });
 }

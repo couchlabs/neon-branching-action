@@ -3,9 +3,10 @@ import * as github from "@actions/github";
 import fetch from "node-fetch";
 
 type Branch = { name?: string; id?: string };
+type Endpoint = {};
 type Branches = Array<Branch>;
 type BranchesResponse = { branches: Branches };
-type BrancheResponse = { branch: Branch };
+type BranchResponse = { branch: Branch; endpoints: Endpoint[] };
 
 // Action inputs, defined in action metadata file:
 // - api_key     : https://neon.tech/docs/manage/api-keys
@@ -34,8 +35,9 @@ async function run(): Promise<void> {
       await sleep(1000);
     }
     console.log(`Creating DB branch "${BRANCH_NAME}"`);
-    const { branch } = await createBranch();
-    console.log("Created DB branch", JSON.stringify(branch, undefined, 2));
+    const { branch, endpoints } = await createBranch();
+    console.log("branch", JSON.stringify(branch, undefined, 2));
+    console.log("endpoints", JSON.stringify(endpoints, undefined, 2));
 
     // create
     const time = new Date().toTimeString();
@@ -78,14 +80,14 @@ async function createBranch() {
       method: "POST",
       body: JSON.stringify({
         branch: { name: BRANCH_NAME },
-        // endpoints: [{ type: "read_write" }],
+        endpoints: [{ type: "read_write" }],
       }),
       ...API_OPTIONS,
     });
-    return response.json().then((data) => data as BrancheResponse);
+    return response.json().then((data) => data as BranchResponse);
   } catch (error: any) {
     core.setFailed(error.message);
-    return { branch: {} };
+    return { branch: {}, endpoints: [] };
   }
 }
 
