@@ -94,7 +94,7 @@ async function getOperation(operation: Operation) {
 async function operatoionConfirmation(creatingBranchOperation: Operation) {
   const { operation } = await getOperation(creatingBranchOperation);
   console.log("operation", operation);
-  if (operation.status != "finish") {
+  if (operation.status != "finished") {
     await sleep(2000);
     await operatoionConfirmation(creatingBranchOperation);
   }

@@ -125,7 +125,7 @@ function operatoionConfirmation(creatingBranchOperation) {
     return __awaiter(this, void 0, void 0, function* () {
         const { operation } = yield getOperation(creatingBranchOperation);
         console.log("operation", operation);
-        if (operation.status != "finish") {
+        if (operation.status != "finished") {
             yield (0, utils_1.sleep)(2000);
             yield operatoionConfirmation(creatingBranchOperation);
         }
