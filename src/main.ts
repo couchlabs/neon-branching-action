@@ -33,7 +33,7 @@ async function run(): Promise<void> {
         console.log(
           `Deleted existing DB branch - { name: "${existingBranch.name}", id: "${existingBranch.id}" }`
         );
-        await sleep(1000);
+        await sleep(2000);
       }
     }
 
