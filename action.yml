@@ -15,11 +15,11 @@ inputs:
     required: true
 outputs:
   host_url: # id of output
-    description: "The host url for the newly created branch endpoint"
+    description: "Host URL for the newly created branch"
   host_id: # id of output
-    description: "The host id for the newly created branch endpoint"
+    description: "Host ID for the newly created branch"
   branch_id: # id of output
-    description: "The id for the newly created branch"
+    description: "Newly created branch ID"
 runs:
   using: "node16"
   main: "dist/index.js"

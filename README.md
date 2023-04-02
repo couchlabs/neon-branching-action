@@ -1,105 +1,46 @@
-<p align="center">
-  <a href="https://github.com/actions/typescript-action/actions"><img alt="typescript-action status" src="https://github.com/actions/typescript-action/workflows/build-test/badge.svg"></a>
-</p>
+## Create a Neon Branch 🚀
+This gitHub action creates a new Neon branch.
+If the branch already exist, it will be deleted and re-created.
 
-# Create a JavaScript Action using TypeScript
+Here is an example of how to use it:
 
-Use this template to bootstrap the creation of a TypeScript action.:rocket:
-
-This template includes compilation support, tests, a validation workflow, publishing, and versioning guidance.  
-
-If you are new, there's also a simpler introduction.  See the [Hello World JavaScript Action](https://github.com/actions/hello-world-javascript-action)
-
-## Create an action from this template
-
-Click the `Use this Template` and provide the new repo details for your action
-
-## Code in Main
-
-> First, you'll need to have a reasonably modern version of `node` handy. This won't work with versions older than 9, for instance.
-
-Install the dependencies  
-```bash
-$ npm install
+```yml
+name: Create Neon Branch with GitHub Actions Demo
+run-name: Create a Neon Branch 🚀
+jobs:
+  create-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: couchlabs/neon-branching-action@main
+        with:
+          api_key: ${{ secrets.NEON_API_KEY }}
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          branch_name: ${{ steps.get_pull_request_sha.outputs.pull_request_sha }}
+          branch_operation: "create_branch" # Alternative you can use "delete_branch"
+        id: create-branch
+      - run: |
+          echo "branch_id: ${{ steps.preview_branch_db.outputs.branch_id }}"
+          echo "host_id: ${{ steps.preview_branch_db.outputs.host_id }}"
+          echo "host_url: ${{ steps.preview_branch_db.outputs.host_url }}"
 ```
 
-Build the typescript and package it for distribution
-```bash
-$ npm run build && npm run package
+## Outputs
+```yml
+outputs:
+  branch_id:
+    description: "Newly created branch ID"
+    value: ${{ steps.output-branch-id.outputs.branch_id }}
+  host_id:
+    description: "Host ID for the newly created branch"
+    value: ${{ steps.output-project-id.outputs.host_id }}
+  host_url:
+    description: "Host URL for the newly created branch"
+    value: ${{ steps.output-project-id.outputs.host_url }}
 ```
 
-Run the tests :heavy_check_mark:  
-```bash
-$ npm test
+## How to set up the NEON_API_KEY
+Navigate to you the Account page on your Neon console. In the Developer Settings, Generate a new API key if you don't have one already. 
+It's important not to share the API key or expose it in your actions or code. This is why you need to add the API key to a new GitHub secret.  
 
- PASS  ./index.test.js
-  ✓ throws invalid number (3ms)
-  ✓ wait 500 ms (504ms)
-  ✓ test runs (95ms)
-
-...
-```
-
-## Change action.yml
-
-The action.yml defines the inputs and output for your action.
-
-Update the action.yml with your name, description, inputs and outputs for your action.
-
-See the [documentation](https://help.github.com/en/articles/metadata-syntax-for-github-actions)
-
-## Change the Code
-
-Most toolkit and CI/CD operations involve async operations so the action is run in an async function.
-
-```javascript
-import * as core from '@actions/core';
-...
-
-async function run() {
-  try { 
-      ...
-  } 
-  catch (error) {
-    core.setFailed(error.message);
-  }
-}
-
-run()
-```
-
-See the [toolkit documentation](https://github.com/actions/toolkit/blob/master/README.md#packages) for the various packages.
-
-## Publish to a distribution branch
-
-Actions are run from GitHub repos so we will checkin the packed dist folder. 
-
-Then run [ncc](https://github.com/zeit/ncc) and push the results:
-```bash
-$ npm run package
-$ git add dist
-$ git commit -a -m "prod dependencies"
-$ git push origin releases/v1
-```
-
-Note: We recommend using the `--license` option for ncc, which will create a license file for all of the production node modules used in your project.
-
-Your action is now published! :rocket: 
-
-See the [versioning documentation](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md)
-
-## Validate
-
-You can now validate the action by referencing `./` in a workflow in your repo (see [test.yml](.github/workflows/test.yml))
-
-```yaml
-uses: ./
-with:
-  milliseconds: 1000
-```
-
-See the [actions tab](https://github.com/actions/typescript-action/actions) for runs of this action! :rocket:
-
-## Usage:
-
-After testing you can [create a v1 tag](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md) to reference the stable and latest V1 action
+In your GitHub repo, go to `Settings` and and locate `Secrets` at the bottom of the left side bar. Click on `Actions` then on the `New repository secret` button to create a new  secret.
+Name the secret `NEON_API_KEY` and paste the API key generated on the Neon console in the `Secret*` field, then press `Add secret` button.
