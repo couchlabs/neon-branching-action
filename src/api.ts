@@ -126,6 +126,8 @@ function doesBranchExist(branches: Branches, branchName: string) {
 }
 
 export {
+  getBranch,
+  getEndpoint,
   getBranches,
   deleteBranch,
   createBranch,

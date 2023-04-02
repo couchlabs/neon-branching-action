@@ -42,7 +42,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.completeAllOperations = exports.doesBranchExist = exports.createBranch = exports.deleteBranch = exports.getBranches = void 0;
+exports.completeAllOperations = exports.doesBranchExist = exports.createBranch = exports.deleteBranch = exports.getBranches = exports.getEndpoint = exports.getBranch = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const node_fetch_1 = __importDefault(__nccwpck_require__(4429));
 const utils_1 = __nccwpck_require__(918);
@@ -137,12 +137,14 @@ function getBranch(branchId) {
         return response.json().then((data) => data);
     });
 }
+exports.getBranch = getBranch;
 function getEndpoint(endpointId) {
     return __awaiter(this, void 0, void 0, function* () {
         const response = yield (0, node_fetch_1.default)(`${ENDPOINTS_API_URL}/${endpointId}`, Object.assign({}, API_OPTIONS));
         return response.json().then((data) => data);
     });
 }
+exports.getEndpoint = getEndpoint;
 function doesBranchExist(branches, branchName) {
     return branches.find((branch) => branch.name === branchName);
 }
@@ -213,26 +215,27 @@ function run() {
                     console.log(`Deleting existing DB branch...`);
                     const { operations } = yield (0, api_1.deleteBranch)(branch);
                     yield (0, api_1.completeAllOperations)(operations);
-                    console.log("Existing DB branch and relative endpoint succesfully deleted");
+                    console.log("Existing DB branch and endpoint succesfully deleted");
                 }
             }
             if (branchOperation === "create_branch") {
                 console.log("Creating new DB branch...");
                 const { operations } = yield (0, api_1.createBranch)(branchName);
-                console.log("pending operations", JSON.stringify(operations, undefined, 2));
                 const results = yield (0, api_1.completeAllOperations)(operations);
-                console.log("results from completing all ops", JSON.stringify(results, undefined, 2));
-                // const newEndpoint = results.find(operation => operation.action === "")
-                // const newBranch = results.find(operation => operation.action === "")
-                // // const { branch, endpoint } = data;
-                // console.log(
-                //   `Created new DB branch - { id: "${branch.id!}", status: "${
-                //     branch.current_state
-                //   }" }`
-                // );
-                // core.setOutput("host_url", endpoint.host);
-                // core.setOutput("host_id", endpoint.id);
-                // core.setOutput("branch_id", branch.id);
+                console.log("New DB branch and endpoint succesfully created");
+                const newBranch = results.find((op) => op.action === "create_branch");
+                const newEndpoint = results.find((op) => op.action === "start_compute");
+                // TODO Move into util validator
+                if (!newBranch || !newEndpoint) {
+                    throw new Error(`Some operations were missing. create_branch: ${JSON.stringify(newBranch)} | start_compute: ${JSON.stringify(newBranch)}`);
+                }
+                const [{ branch }, { endpoint }] = yield Promise.all([
+                    (0, api_1.getBranch)(newBranch.id),
+                    (0, api_1.getEndpoint)(newEndpoint.endpoint_id),
+                ]);
+                core.setOutput("host_url", endpoint.host);
+                core.setOutput("host_id", endpoint.id);
+                core.setOutput("branch_id", branch.id);
             }
         }
         catch (error) {
