@@ -2,7 +2,7 @@ import * as core from "@actions/core";
 import fetch from "node-fetch";
 import { sleep } from "./utils";
 
-type Branch = { name?: string; id?: string; pending_state?: string };
+type Branch = { name?: string; id?: string; current_state?: string };
 type Endpoint = { host: string; id: string };
 type Branches = Array<Branch>;
 type BranchesResponse = { branches: Branches };

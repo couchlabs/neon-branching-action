@@ -45,7 +45,7 @@ async function run(): Promise<void> {
       console.log("Creating new DB branch...");
       const { branch, endpoints } = await createBranch(branchName);
       console.log(
-        `Created new DB branch - { name: "${branch.name}", id: "${branch.id}", status: "${branch.pending_state}" }`
+        `Created new DB branch - { id: "${branch.id}", status: "${branch.current_state}" }`
       );
 
       core.setOutput("host_url", endpoints[0].host);
