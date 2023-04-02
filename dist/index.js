@@ -138,9 +138,10 @@ function createBranch(branchName) {
                     branch: { name: branchName },
                     endpoints: [{ type: "read_write" }],
                 }) }, API_OPTIONS));
-            const { operations } = yield response
-                .json()
-                .then((data) => data);
+            const { operations } = yield response.json().then((data) => {
+                console.log("DATA", JSON.stringify(data, undefined, 2));
+                return data;
+            });
             console.log("oprations", JSON.stringify(operations, undefined, 2));
             const creatingBranchOperation = operations.find((operation) => operation.action === "create_branch");
             if (creatingBranchOperation != null) {

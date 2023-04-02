@@ -110,9 +110,10 @@ async function createBranch(branchName: string) {
       }),
       ...API_OPTIONS,
     });
-    const { operations } = await response
-      .json()
-      .then((data) => data as BranchResponse);
+    const { operations } = await response.json().then((data) => {
+      console.log("DATA", JSON.stringify(data, undefined, 2));
+      return data as BranchResponse;
+    });
 
     console.log("oprations", JSON.stringify(operations, undefined, 2));
 
