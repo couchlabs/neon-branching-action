@@ -146,7 +146,9 @@ function createBranch(branchName) {
             const creatingBranchOperation = operations.find((operation) => operation.action === "create_branch");
             if (creatingBranchOperation != null) {
                 console.log("creatingBranchOperation", JSON.stringify(creatingBranchOperation, undefined, 2));
-                yield operatoionConfirmation(creatingBranchOperation);
+                if (creatingBranchOperation.status !== "finished") {
+                    yield operatoionConfirmation(creatingBranchOperation);
+                }
             }
             else {
                 throw new Error("Something went wrong when trying to create new branch");
@@ -154,7 +156,9 @@ function createBranch(branchName) {
             const creatingEndpointOperation = operations.find((operation) => operation.action === "start_compute");
             if (creatingEndpointOperation != null) {
                 console.log("creatingEndpointOperation", JSON.stringify(creatingEndpointOperation, undefined, 2));
-                yield operatoionConfirmation(creatingEndpointOperation);
+                if (creatingEndpointOperation.status !== "finished") {
+                    yield operatoionConfirmation(creatingEndpointOperation);
+                }
             }
             else {
                 throw new Error("Something went wrong when trying to create new branch");

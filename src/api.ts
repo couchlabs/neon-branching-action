@@ -125,7 +125,9 @@ async function createBranch(branchName: string) {
         "creatingBranchOperation",
         JSON.stringify(creatingBranchOperation, undefined, 2)
       );
-      await operatoionConfirmation(creatingBranchOperation);
+      if (creatingBranchOperation.status !== "finished") {
+        await operatoionConfirmation(creatingBranchOperation);
+      }
     } else {
       throw new Error("Something went wrong when trying to create new branch");
     }
@@ -138,7 +140,9 @@ async function createBranch(branchName: string) {
         "creatingEndpointOperation",
         JSON.stringify(creatingEndpointOperation, undefined, 2)
       );
-      await operatoionConfirmation(creatingEndpointOperation);
+      if (creatingEndpointOperation.status !== "finished") {
+        await operatoionConfirmation(creatingEndpointOperation);
+      }
     } else {
       throw new Error("Something went wrong when trying to create new branch");
     }
