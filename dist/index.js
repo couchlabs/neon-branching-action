@@ -68,9 +68,9 @@ function run() {
                 console.log(`Deleting existing DB branch "${existingBranch.name}"`);
                 yield deleteBranch(existingBranch);
             }
-            console.log(`Creatomg DB branch "${BRANCH_NAME}"`);
-            const newBranch = yield createBranch();
-            console.log("Created DB branch", JSON.stringify(newBranch, undefined, 2));
+            console.log(`Creating DB branch "${BRANCH_NAME}"`);
+            const { branch } = yield createBranch();
+            console.log("Created DB branch", JSON.stringify(branch, undefined, 2));
             // create
             const time = new Date().toTimeString();
             core.setOutput("time", time);
@@ -112,13 +112,13 @@ function createBranch() {
         try {
             const response = yield (0, node_fetch_1.default)(BRANCHES_API_URL, Object.assign({ method: "POST", body: JSON.stringify({
                     branch: { name: BRANCH_NAME },
-                    endpoints: [{ type: "read_write" }],
+                    // endpoints: [{ type: "read_write" }],
                 }) }, API_OPTIONS));
             return response.json().then((data) => data);
         }
         catch (error) {
             core.setFailed(error.message);
-            return {};
+            return { branch: {} };
         }
     });
 }

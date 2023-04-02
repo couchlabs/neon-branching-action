@@ -32,9 +32,9 @@ async function run(): Promise<void> {
       console.log(`Deleting existing DB branch "${existingBranch.name}"`);
       await deleteBranch(existingBranch);
     }
-    console.log(`Creatomg DB branch "${BRANCH_NAME}"`);
-    const newBranch = await createBranch();
-    console.log("Created DB branch", JSON.stringify(newBranch, undefined, 2));
+    console.log(`Creating DB branch "${BRANCH_NAME}"`);
+    const { branch } = await createBranch();
+    console.log("Created DB branch", JSON.stringify(branch, undefined, 2));
 
     // create
     const time = new Date().toTimeString();
@@ -77,14 +77,14 @@ async function createBranch() {
       method: "POST",
       body: JSON.stringify({
         branch: { name: BRANCH_NAME },
-        endpoints: [{ type: "read_write" }],
+        // endpoints: [{ type: "read_write" }],
       }),
       ...API_OPTIONS,
     });
     return response.json().then((data) => data as BrancheResponse);
   } catch (error: any) {
     core.setFailed(error.message);
-    return {};
+    return { branch: {} };
   }
 }
 
