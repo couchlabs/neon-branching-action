@@ -251,8 +251,8 @@ function run() {
                 const { branches } = yield (0, api_1.getBranches)();
                 const existingBranch = (0, api_1.doesBranchExist)(branches, branchName);
                 if (existingBranch != null) {
-                    // console.log("Tagging existing DB branch for deletion...");
-                    // await updateBranch(existingBranch);
+                    console.log("Tagging existing DB branch for deletion...");
+                    yield (0, api_1.updateBranch)(existingBranch);
                     console.log("Deleting existing DB branch...");
                     yield (0, api_1.deleteBranch)(existingBranch);
                     yield (0, api_1.deleteBranchConfirmation)(existingBranch);
