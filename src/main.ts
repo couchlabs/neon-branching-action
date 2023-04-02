@@ -1,100 +1,49 @@
 import * as core from "@actions/core";
-import * as github from "@actions/github";
-import fetch from "node-fetch";
-
-type Branch = { name?: string; id?: string };
-type Endpoint = {};
-type Branches = Array<Branch>;
-type BranchesResponse = { branches: Branches };
-type BranchResponse = { branch: Branch; endpoints: Endpoint[] };
+import {
+  getBranches,
+  doesBranchExist,
+  deleteBranch,
+  createBranch,
+} from "./api";
+import { sleep } from "./utils";
 
 // Action inputs, defined in action metadata file:
-// - api_key     : https://neon.tech/docs/manage/api-keys
-// - project_id  : neon.tech project id
-// - branch_name : name for the new branch
-const API_KEY = core.getInput("api_key");
-const PROJECT_ID = core.getInput("project_id");
-const BRANCH_NAME = core.getInput("branch_name");
-
-const BRANCHES_API_URL = `https://console.neon.tech/api/v2/projects/${PROJECT_ID}/branches`;
-const API_OPTIONS = {
-  headers: {
-    "content-type": "application/json",
-    accept: "application/json",
-    authorization: `Bearer ${API_KEY}`,
-  },
-};
+const branchName = core.getInput("branch_name");
+const BRANCH_OPERATION = core.getInput("branch_operation");
 
 async function run(): Promise<void> {
   try {
-    const { branches } = await getBranches();
-    const existingBranch = doesBranchExist(branches);
-    if (existingBranch != null) {
-      console.log(`Deleting existing DB branch "${existingBranch.name}"`);
-      await deleteBranch(existingBranch);
-      await sleep(1000);
-    }
-    console.log(`Creating DB branch "${BRANCH_NAME}"`);
-    const { branch, endpoints } = await createBranch();
-    console.log("branch", JSON.stringify(branch, undefined, 2));
-    console.log("endpoints", JSON.stringify(endpoints, undefined, 2));
+    if (
+      BRANCH_OPERATION === "create_branch" ||
+      BRANCH_OPERATION === "delete_branch"
+    ) {
+      const { branches } = await getBranches();
+      const existingBranch = doesBranchExist(branches, branchName);
 
-    // create
-    const time = new Date().toTimeString();
-    core.setOutput("time", time);
-    // Get the JSON webhook payload for the event that triggered the workflow
-    // const payload = JSON.stringify(github.context.payload, undefined, 2);
-    // console.log(`The event payload: ${payload}`);
+      if (existingBranch != null) {
+        console.log("Deleting existing DB branch...");
+        await deleteBranch(existingBranch);
+        console.log(
+          `Deleted existing DB branch - { name: "${existingBranch.name}", id: "${existingBranch.id}" }`
+        );
+        await sleep(1000);
+      }
+    }
+
+    if (BRANCH_OPERATION === "create_branch") {
+      console.log("Creating new DB branch...");
+      const { branch, endpoints } = await createBranch(branchName);
+      console.log(
+        `Created new DB branch - { name: "${branch.name}", id: "${branch.id}", status: "${branch.pending_state}" }`
+      );
+
+      core.setOutput("host_url", endpoints[0].host);
+      core.setOutput("host_id", endpoints[0].id);
+      core.setOutput("branch_id", branch.id);
+    }
   } catch (error: any) {
     core.setFailed(error.message);
   }
 }
 
 run();
-
-// Helper functions
-async function getBranches() {
-  try {
-    const response = await fetch(BRANCHES_API_URL, API_OPTIONS);
-    return response.json().then((data) => data as BranchesResponse);
-  } catch (error: any) {
-    core.setFailed(error.message);
-    return { branches: [] };
-  }
-}
-
-async function deleteBranch(branch: Branch) {
-  try {
-    await fetch(`${BRANCHES_API_URL}/${branch.id}`, {
-      method: "DELETE",
-      ...API_OPTIONS,
-    });
-  } catch (error: any) {
-    core.setFailed(error.message);
-  }
-}
-
-async function createBranch() {
-  try {
-    const response = await fetch(BRANCHES_API_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        branch: { name: BRANCH_NAME },
-        endpoints: [{ type: "read_write" }],
-      }),
-      ...API_OPTIONS,
-    });
-    return response.json().then((data) => data as BranchResponse);
-  } catch (error: any) {
-    core.setFailed(error.message);
-    return { branch: {}, endpoints: [] };
-  }
-}
-
-function doesBranchExist(branches: Branches) {
-  return branches.find((branch) => branch.name === BRANCH_NAME);
-}
-
-async function sleep(millisecs: number) {
-  return new Promise((resolve) => setTimeout(resolve, millisecs));
-}

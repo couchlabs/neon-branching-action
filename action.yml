@@ -2,7 +2,7 @@ name: "Neon Branching Action"
 description: "Handle creating and deleting databes branches on Neon.tech"
 inputs:
   api_key: # id of input
-    description: "neon.tech api key"
+    description: "neon.tech api key - https://neon.tech/docs/manage/api-keys"
     required: true
   project_id: # id of input
     description: "neon.tech project id"
@@ -10,9 +10,16 @@ inputs:
   branch_name: # id of input
     description: "name for the new branch"
     required: true
+  branch_operation: # id of input
+    description: "type of branching operation to perform: ['create_branch', 'delete_branch']"
+    required: true
 outputs:
-  time: # id of output
-    description: "The time we greeted you"
+  host_url: # id of output
+    description: "The host url for the newly created branch endpoint"
+  host_id: # id of output
+    description: "The host id for the newly created branch endpoint"
+  branch_id: # id of output
+    description: "The id for the newly created branch"
 runs:
   using: "node16"
   main: "dist/index.js"

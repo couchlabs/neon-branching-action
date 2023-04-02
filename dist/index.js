@@ -1,7 +1,7 @@
 require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 3109:
+/***/ 8947:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -42,15 +42,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.doesBranchExist = exports.createBranch = exports.deleteBranch = exports.getBranches = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const node_fetch_1 = __importDefault(__nccwpck_require__(4429));
 // Action inputs, defined in action metadata file:
-// - api_key     : https://neon.tech/docs/manage/api-keys
-// - project_id  : neon.tech project id
-// - branch_name : name for the new branch
 const API_KEY = core.getInput("api_key");
 const PROJECT_ID = core.getInput("project_id");
-const BRANCH_NAME = core.getInput("branch_name");
 const BRANCHES_API_URL = `https://console.neon.tech/api/v2/projects/${PROJECT_ID}/branches`;
 const API_OPTIONS = {
     headers: {
@@ -59,33 +56,6 @@ const API_OPTIONS = {
         authorization: `Bearer ${API_KEY}`,
     },
 };
-function run() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const { branches } = yield getBranches();
-            const existingBranch = doesBranchExist(branches);
-            if (existingBranch != null) {
-                console.log(`Deleting existing DB branch "${existingBranch.name}"`);
-                yield deleteBranch(existingBranch);
-                yield sleep(1000);
-            }
-            console.log(`Creating DB branch "${BRANCH_NAME}"`);
-            const { branch, endpoints } = yield createBranch();
-            console.log("branch", JSON.stringify(branch, undefined, 2));
-            console.log("endpoints", JSON.stringify(endpoints, undefined, 2));
-            // create
-            const time = new Date().toTimeString();
-            core.setOutput("time", time);
-            // Get the JSON webhook payload for the event that triggered the workflow
-            // const payload = JSON.stringify(github.context.payload, undefined, 2);
-            // console.log(`The event payload: ${payload}`);
-        }
-        catch (error) {
-            core.setFailed(error.message);
-        }
-    });
-}
-run();
 // Helper functions
 function getBranches() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -99,6 +69,7 @@ function getBranches() {
         }
     });
 }
+exports.getBranches = getBranches;
 function deleteBranch(branch) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -109,11 +80,12 @@ function deleteBranch(branch) {
         }
     });
 }
-function createBranch() {
+exports.deleteBranch = deleteBranch;
+function createBranch(branchName) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const response = yield (0, node_fetch_1.default)(BRANCHES_API_URL, Object.assign({ method: "POST", body: JSON.stringify({
-                    branch: { name: BRANCH_NAME },
+                    branch: { name: branchName },
                     endpoints: [{ type: "read_write" }],
                 }) }, API_OPTIONS));
             return response.json().then((data) => data);
@@ -124,14 +96,114 @@ function createBranch() {
         }
     });
 }
-function doesBranchExist(branches) {
-    return branches.find((branch) => branch.name === BRANCH_NAME);
+exports.createBranch = createBranch;
+function doesBranchExist(branches, branchName) {
+    return branches.find((branch) => branch.name === branchName);
 }
+exports.doesBranchExist = doesBranchExist;
+
+
+/***/ }),
+
+/***/ 3109:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const core = __importStar(__nccwpck_require__(2186));
+const api_1 = __nccwpck_require__(8947);
+const utils_1 = __nccwpck_require__(918);
+// Action inputs, defined in action metadata file:
+const branchName = core.getInput("branch_name");
+const BRANCH_OPERATION = core.getInput("branch_operation");
+function run() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            if (BRANCH_OPERATION === "create_branch" ||
+                BRANCH_OPERATION === "delete_branch") {
+                const { branches } = yield (0, api_1.getBranches)();
+                const existingBranch = (0, api_1.doesBranchExist)(branches, branchName);
+                if (existingBranch != null) {
+                    console.log("Deleting existing DB branch...");
+                    yield (0, api_1.deleteBranch)(existingBranch);
+                    console.log(`Deleted existing DB branch - { name: "${existingBranch.name}", id: "${existingBranch.id}" }`);
+                    yield (0, utils_1.sleep)(1000);
+                }
+            }
+            if (BRANCH_OPERATION === "create_branch") {
+                console.log("Creating new DB branch...");
+                const { branch, endpoints } = yield (0, api_1.createBranch)(branchName);
+                console.log(`Created new DB branch - { name: "${branch.name}", id: "${branch.id}", status: "${branch.pending_state}" }`);
+                core.setOutput("host_url", endpoints[0].host);
+                core.setOutput("host_id", endpoints[0].id);
+                core.setOutput("branch_id", branch.id);
+            }
+        }
+        catch (error) {
+            core.setFailed(error.message);
+        }
+    });
+}
+run();
+
+
+/***/ }),
+
+/***/ 918:
+/***/ (function(__unused_webpack_module, exports) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.sleep = void 0;
 function sleep(millisecs) {
     return __awaiter(this, void 0, void 0, function* () {
         return new Promise((resolve) => setTimeout(resolve, millisecs));
     });
 }
+exports.sleep = sleep;
 
 
 /***/ }),
