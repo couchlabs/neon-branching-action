@@ -46,14 +46,14 @@ exports.doesBranchExist = exports.createBranch = exports.deleteBranch = exports.
 const core = __importStar(__nccwpck_require__(2186));
 const node_fetch_1 = __importDefault(__nccwpck_require__(4429));
 // Action inputs, defined in action metadata file:
-const API_KEY = core.getInput("api_key");
-const PROJECT_ID = core.getInput("project_id");
-const BRANCHES_API_URL = `https://console.neon.tech/api/v2/projects/${PROJECT_ID}/branches`;
+const apiKey = core.getInput("api_key");
+const projectId = core.getInput("project_id");
+const BRANCHES_API_URL = `https://console.neon.tech/api/v2/projects/${projectId}/branches`;
 const API_OPTIONS = {
     headers: {
         "content-type": "application/json",
         accept: "application/json",
-        authorization: `Bearer ${API_KEY}`,
+        authorization: `Bearer ${apiKey}`,
     },
 };
 // Helper functions
@@ -148,12 +148,18 @@ const api_1 = __nccwpck_require__(8947);
 const utils_1 = __nccwpck_require__(918);
 // Action inputs, defined in action metadata file:
 const branchName = core.getInput("branch_name");
-const BRANCH_OPERATION = core.getInput("branch_operation");
+const branchOperation = core.getInput("branch_operation");
+const apiKey = core.getInput("api_key");
+const projectId = core.getInput("project_id");
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
+        if (!branchName || !branchOperation || !apiKey || !projectId) {
+            core.setFailed("Missing required input");
+            return;
+        }
         try {
-            if (BRANCH_OPERATION === "create_branch" ||
-                BRANCH_OPERATION === "delete_branch") {
+            if (branchOperation === "create_branch" ||
+                branchOperation === "delete_branch") {
                 const { branches } = yield (0, api_1.getBranches)();
                 const existingBranch = (0, api_1.doesBranchExist)(branches, branchName);
                 if (existingBranch != null) {
@@ -163,7 +169,7 @@ function run() {
                     yield (0, utils_1.sleep)(1000);
                 }
             }
-            if (BRANCH_OPERATION === "create_branch") {
+            if (branchOperation === "create_branch") {
                 console.log("Creating new DB branch...");
                 const { branch, endpoints } = yield (0, api_1.createBranch)(branchName);
                 console.log(`Created new DB branch - { name: "${branch.name}", id: "${branch.id}", status: "${branch.pending_state}" }`);

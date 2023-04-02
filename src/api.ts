@@ -8,15 +8,15 @@ type BranchesResponse = { branches: Branches };
 type BranchResponse = { branch: Branch; endpoints: Endpoint[] };
 
 // Action inputs, defined in action metadata file:
-const API_KEY = core.getInput("api_key");
-const PROJECT_ID = core.getInput("project_id");
+const apiKey = core.getInput("api_key");
+const projectId = core.getInput("project_id");
 
-const BRANCHES_API_URL = `https://console.neon.tech/api/v2/projects/${PROJECT_ID}/branches`;
+const BRANCHES_API_URL = `https://console.neon.tech/api/v2/projects/${projectId}/branches`;
 const API_OPTIONS = {
   headers: {
     "content-type": "application/json",
     accept: "application/json",
-    authorization: `Bearer ${API_KEY}`,
+    authorization: `Bearer ${apiKey}`,
   },
 };
 

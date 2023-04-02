@@ -9,13 +9,20 @@ import { sleep } from "./utils";
 
 // Action inputs, defined in action metadata file:
 const branchName = core.getInput("branch_name");
-const BRANCH_OPERATION = core.getInput("branch_operation");
+const branchOperation = core.getInput("branch_operation");
+const apiKey = core.getInput("api_key");
+const projectId = core.getInput("project_id");
 
 async function run(): Promise<void> {
+  if (!branchName || !branchOperation || !apiKey || !projectId) {
+    core.setFailed("Missing required input");
+    return;
+  }
+
   try {
     if (
-      BRANCH_OPERATION === "create_branch" ||
-      BRANCH_OPERATION === "delete_branch"
+      branchOperation === "create_branch" ||
+      branchOperation === "delete_branch"
     ) {
       const { branches } = await getBranches();
       const existingBranch = doesBranchExist(branches, branchName);
@@ -30,7 +37,7 @@ async function run(): Promise<void> {
       }
     }
 
-    if (BRANCH_OPERATION === "create_branch") {
+    if (branchOperation === "create_branch") {
       console.log("Creating new DB branch...");
       const { branch, endpoints } = await createBranch(branchName);
       console.log(
