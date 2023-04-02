@@ -7,21 +7,16 @@ import {
   completeAllOperations,
   getBranch,
   getEndpoint,
+  OperationAction,
 } from "./api";
+import { Actions } from "./messages";
+import { notNull } from "./utils";
 
 // Action inputs, defined in action metadata file:
-const branchName = core.getInput("branch_name");
-const branchOperation = core.getInput("branch_operation");
-const apiKey = core.getInput("api_key");
-const projectId = core.getInput("project_id");
+const branchName = notNull(core.getInput("branch_name"));
+const branchOperation = notNull(core.getInput("branch_operation"));
 
 async function run(): Promise<void> {
-  // TODO: move into validator utility
-  if (!branchName || !branchOperation || !apiKey || !projectId) {
-    core.setFailed("Missing required input");
-    return;
-  }
-
   try {
     if (
       branchOperation === "create_branch" ||
@@ -31,30 +26,25 @@ async function run(): Promise<void> {
       const branch = doesBranchExist(branches, branchName);
 
       if (branch != null) {
-        // TODO move into message helpers
-        console.log(`Deleting existing DB branch...`);
+        console.log(Actions.BRANCH_DELETING);
         const { operations } = await deleteBranch(branch);
         await completeAllOperations(operations);
-        console.log("Existing DB branch and endpoint succesfully deleted");
+        console.log(Actions.BRANCH_DELETED);
       }
     }
 
     if (branchOperation === "create_branch") {
-      console.log("Creating new DB branch...");
+      console.log(Actions.BRANCH_CREATING);
       const { operations } = await createBranch(branchName);
       const results = await completeAllOperations(operations);
-      console.log("New DB branch and endpoint succesfully created");
+      console.log(Actions.BRANCH_CREATED);
 
-      const newBranch = results.find((op) => op.action === "create_branch");
-      const newEndpoint = results.find((op) => op.action === "start_compute");
-      // TODO Move into util validator
-      if (!newBranch || !newEndpoint) {
-        throw new Error(
-          `Some operations were missing. create_branch: ${JSON.stringify(
-            newBranch
-          )} | start_compute: ${JSON.stringify(newBranch)}`
-        );
-      }
+      const newBranch = notNull(
+        results.find((op) => op.action === OperationAction.CREATE_BRANCH)
+      );
+      const newEndpoint = notNull(
+        results.find((op) => op.action === OperationAction.START_COMPUTE)
+      );
 
       const [{ branch }, { endpoint }] = await Promise.all([
         getBranch(newBranch.branch_id),
