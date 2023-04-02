@@ -67,6 +67,7 @@ function run() {
             if (existingBranch != null) {
                 console.log(`Deleting existing DB branch "${existingBranch.name}"`);
                 yield deleteBranch(existingBranch);
+                yield sleep(1000);
             }
             console.log(`Creating DB branch "${BRANCH_NAME}"`);
             const { branch } = yield createBranch();
@@ -112,7 +113,7 @@ function createBranch() {
         try {
             const response = yield (0, node_fetch_1.default)(BRANCHES_API_URL, Object.assign({ method: "POST", body: JSON.stringify({
                     branch: { name: BRANCH_NAME },
-                    endpoints: [{ type: "read_write" }],
+                    // endpoints: [{ type: "read_write" }],
                 }) }, API_OPTIONS));
             return response.json().then((data) => data);
         }
@@ -124,6 +125,11 @@ function createBranch() {
 }
 function doesBranchExist(branches) {
     return branches.find((branch) => branch.name === BRANCH_NAME);
+}
+function sleep(millisecs) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return new Promise((resolve) => setTimeout(resolve, millisecs));
+    });
 }
 
 

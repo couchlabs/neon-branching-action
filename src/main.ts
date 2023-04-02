@@ -31,6 +31,7 @@ async function run(): Promise<void> {
     if (existingBranch != null) {
       console.log(`Deleting existing DB branch "${existingBranch.name}"`);
       await deleteBranch(existingBranch);
+      await sleep(1000);
     }
     console.log(`Creating DB branch "${BRANCH_NAME}"`);
     const { branch } = await createBranch();
@@ -77,7 +78,7 @@ async function createBranch() {
       method: "POST",
       body: JSON.stringify({
         branch: { name: BRANCH_NAME },
-        endpoints: [{ type: "read_write" }],
+        // endpoints: [{ type: "read_write" }],
       }),
       ...API_OPTIONS,
     });
@@ -90,4 +91,8 @@ async function createBranch() {
 
 function doesBranchExist(branches: Branches) {
   return branches.find((branch) => branch.name === BRANCH_NAME);
+}
+
+async function sleep(millisecs: number) {
+  return new Promise((resolve) => setTimeout(resolve, millisecs));
 }
