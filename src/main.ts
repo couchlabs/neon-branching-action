@@ -77,7 +77,7 @@ async function createBranch() {
       method: "POST",
       body: JSON.stringify({
         branch: { name: BRANCH_NAME },
-        // endpoints: [{ type: "read_write" }],
+        endpoints: [{ type: "read_write" }],
       }),
       ...API_OPTIONS,
     });

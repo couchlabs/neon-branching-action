@@ -112,7 +112,7 @@ function createBranch() {
         try {
             const response = yield (0, node_fetch_1.default)(BRANCHES_API_URL, Object.assign({ method: "POST", body: JSON.stringify({
                     branch: { name: BRANCH_NAME },
-                    // endpoints: [{ type: "read_write" }],
+                    endpoints: [{ type: "read_write" }],
                 }) }, API_OPTIONS));
             return response.json().then((data) => data);
         }
