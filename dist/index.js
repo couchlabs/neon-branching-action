@@ -42,7 +42,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.doesBranchExist = exports.createBranch = exports.deleteBranch = exports.getBranches = void 0;
+exports.updateBranch = exports.doesBranchExist = exports.createBranch = exports.deleteBranch = exports.getBranches = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const node_fetch_1 = __importDefault(__nccwpck_require__(4429));
 // Action inputs, defined in action metadata file:
@@ -81,6 +81,19 @@ function deleteBranch(branch) {
     });
 }
 exports.deleteBranch = deleteBranch;
+function updateBranch(branch) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            yield (0, node_fetch_1.default)(`${BRANCHES_API_URL}/${branch.id}`, Object.assign({ method: "PATCH", body: JSON.stringify({
+                    branch: { name: `${branch.name}--toDelete` },
+                }) }, API_OPTIONS));
+        }
+        catch (error) {
+            core.setFailed(error.message);
+        }
+    });
+}
+exports.updateBranch = updateBranch;
 function createBranch(branchName) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -163,6 +176,8 @@ function run() {
                 const { branches } = yield (0, api_1.getBranches)();
                 const existingBranch = (0, api_1.doesBranchExist)(branches, branchName);
                 if (existingBranch != null) {
+                    console.log("Tagging existing DB branch for deletion...");
+                    yield (0, api_1.updateBranch)(existingBranch);
                     console.log("Deleting existing DB branch...");
                     yield (0, api_1.deleteBranch)(existingBranch);
                     console.log(`Deleted existing DB branch - { name: "${existingBranch.name}", id: "${existingBranch.id}" }`);

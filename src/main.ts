@@ -4,6 +4,7 @@ import {
   doesBranchExist,
   deleteBranch,
   createBranch,
+  updateBranch,
 } from "./api";
 import { sleep } from "./utils";
 
@@ -28,12 +29,14 @@ async function run(): Promise<void> {
       const existingBranch = doesBranchExist(branches, branchName);
 
       if (existingBranch != null) {
+        console.log("Tagging existing DB branch for deletion...");
+        await updateBranch(existingBranch);
         console.log("Deleting existing DB branch...");
         await deleteBranch(existingBranch);
         console.log(
           `Deleted existing DB branch - { name: "${existingBranch.name}", id: "${existingBranch.id}" }`
         );
-        await sleep(2000);
+        await sleep(1000);
       }
     }
 

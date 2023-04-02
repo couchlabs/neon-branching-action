@@ -42,6 +42,20 @@ async function deleteBranch(branch: Branch) {
   }
 }
 
+async function updateBranch(branch: Branch) {
+  try {
+    await fetch(`${BRANCHES_API_URL}/${branch.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        branch: { name: `${branch.name}--toDelete` },
+      }),
+      ...API_OPTIONS,
+    });
+  } catch (error: any) {
+    core.setFailed(error.message);
+  }
+}
+
 async function createBranch(branchName: string) {
   try {
     const response = await fetch(BRANCHES_API_URL, {
@@ -63,4 +77,10 @@ function doesBranchExist(branches: Branches, branchName: string) {
   return branches.find((branch) => branch.name === branchName);
 }
 
-export { getBranches, deleteBranch, createBranch, doesBranchExist };
+export {
+  getBranches,
+  deleteBranch,
+  createBranch,
+  doesBranchExist,
+  updateBranch,
+};
