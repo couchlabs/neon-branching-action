@@ -229,13 +229,10 @@ function run() {
                 if (!newBranch || !newEndpoint) {
                     throw new Error(`Some operations were missing. create_branch: ${JSON.stringify(newBranch)} | start_compute: ${JSON.stringify(newBranch)}`);
                 }
-                console.log("newBranch", JSON.stringify(newBranch, undefined, 2));
                 const [{ branch }, { endpoint }] = yield Promise.all([
-                    (0, api_1.getBranch)(newBranch.id),
+                    (0, api_1.getBranch)(newBranch.branch_id),
                     (0, api_1.getEndpoint)(newEndpoint.endpoint_id),
                 ]);
-                console.log("branch-----details", JSON.stringify(branch, undefined, 2));
-                console.log("endpoint---details", JSON.stringify(endpoint, undefined, 2));
                 core.setOutput("host_url", endpoint.host);
                 core.setOutput("host_id", endpoint.id);
                 core.setOutput("branch_id", branch.id);

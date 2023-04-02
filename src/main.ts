@@ -56,14 +56,10 @@ async function run(): Promise<void> {
         );
       }
 
-      console.log("newBranch", JSON.stringify(newBranch, undefined, 2));
       const [{ branch }, { endpoint }] = await Promise.all([
-        getBranch(newBranch.id),
+        getBranch(newBranch.branch_id),
         getEndpoint(newEndpoint.endpoint_id!),
       ]);
-
-      console.log("branch-----details", JSON.stringify(branch, undefined, 2));
-      console.log("endpoint---details", JSON.stringify(endpoint, undefined, 2));
 
       core.setOutput("host_url", endpoint.host);
       core.setOutput("host_id", endpoint.id);
