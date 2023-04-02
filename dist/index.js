@@ -42,7 +42,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.deleteBranchConfirmation = exports.updateBranch = exports.doesBranchExist = exports.createBranch = exports.deleteBranch = exports.getBranches = void 0;
+exports.completeAllOperations = exports.doesBranchExist = exports.createBranch = exports.deleteBranch = exports.getBranches = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const node_fetch_1 = __importDefault(__nccwpck_require__(4429));
 const utils_1 = __nccwpck_require__(918);
@@ -78,38 +78,31 @@ function deleteBranch(branch) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const data = yield (0, node_fetch_1.default)(`${BRANCHES_API_URL}/${branch.id}`, Object.assign({ method: "DELETE" }, API_OPTIONS));
-            return data.json();
+            return data.json().then((data) => data);
         }
         catch (error) {
             core.setFailed(error.message);
+            throw error;
         }
     });
 }
 exports.deleteBranch = deleteBranch;
-function deleteBranchConfirmation(branch) {
-    var _a;
+function completeAllOperations(operations) {
     return __awaiter(this, void 0, void 0, function* () {
-        const { branches } = yield getBranches();
-        if (doesBranchExist(branches, (_a = branch.name) !== null && _a !== void 0 ? _a : branchName)) {
-            yield (0, utils_1.sleep)(2000);
-            yield deleteBranchConfirmation(branch);
-        }
+        return Promise.all(operations.map(completeOperation));
     });
 }
-exports.deleteBranchConfirmation = deleteBranchConfirmation;
-function updateBranch(branch) {
+exports.completeAllOperations = completeAllOperations;
+function completeOperation(pendingOperation) {
     return __awaiter(this, void 0, void 0, function* () {
-        try {
-            yield (0, node_fetch_1.default)(`${BRANCHES_API_URL}/${branch.id}`, Object.assign({ method: "PATCH", body: JSON.stringify({
-                    branch: { name: `${branch.name}--toDelete` },
-                }) }, API_OPTIONS));
+        const { operation } = yield getOperation(pendingOperation);
+        if (operation.status != "finished") {
+            yield (0, utils_1.sleep)(500);
+            yield completeOperation(pendingOperation);
         }
-        catch (error) {
-            core.setFailed(error.message);
-        }
+        return operation;
     });
 }
-exports.updateBranch = updateBranch;
 function getOperation(operation) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -118,17 +111,7 @@ function getOperation(operation) {
         }
         catch (error) {
             core.setFailed(error.message);
-            return { operation: { status: undefined } };
-        }
-    });
-}
-function operatoionConfirmation(creatingBranchOperation) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const { operation } = yield getOperation(creatingBranchOperation);
-        //   console.log("operation", operation);
-        if (operation.status != "finished") {
-            yield (0, utils_1.sleep)(2000);
-            yield operatoionConfirmation(creatingBranchOperation);
+            throw error;
         }
     });
 }
@@ -139,44 +122,11 @@ function createBranch(branchName) {
                     branch: { name: branchName },
                     endpoints: [{ type: "read_write" }],
                 }) }, API_OPTIONS));
-            const { operations } = yield response.json().then((data) => {
-                //   console.log("DATA", JSON.stringify(data, undefined, 2));
-                return data;
-            });
-            // console.log("oprations", JSON.stringify(operations, undefined, 2));
-            const creatingBranchOperation = operations.find((operation) => operation.action === "create_branch");
-            if (creatingBranchOperation != null) {
-                //   console.log(
-                //     "creatingBranchOperation",
-                //     JSON.stringify(creatingBranchOperation, undefined, 2)
-                //   );
-                if (creatingBranchOperation.status !== "finished") {
-                    yield operatoionConfirmation(creatingBranchOperation);
-                }
-            }
-            else {
-                throw new Error("Something went wrong when trying to create new branch");
-            }
-            const creatingEndpointOperation = operations.find((operation) => operation.action === "start_compute");
-            if (creatingEndpointOperation != null) {
-                //   console.log(
-                //     "creatingEndpointOperation",
-                //     JSON.stringify(creatingEndpointOperation, undefined, 2)
-                //   );
-                if (creatingEndpointOperation.status !== "finished") {
-                    yield operatoionConfirmation(creatingEndpointOperation);
-                }
-            }
-            else {
-                throw new Error("Something went wrong when trying to create new branch");
-            }
-            // get branch and get endpoint
-            const { branch } = yield getBranch(creatingBranchOperation.branch_id);
-            const { endpoint } = yield getEndpoint(creatingEndpointOperation.endpoint_id);
-            return { branch, endpoint };
+            return yield response.json().then((data) => data);
         }
         catch (error) {
             core.setFailed(error.message);
+            throw error;
         }
     });
 }
@@ -248,6 +198,7 @@ const apiKey = core.getInput("api_key");
 const projectId = core.getInput("project_id");
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
+        // TODO: move into validator utility
         if (!branchName || !branchOperation || !apiKey || !projectId) {
             core.setFailed("Missing required input");
             return;
@@ -256,30 +207,32 @@ function run() {
             if (branchOperation === "create_branch" ||
                 branchOperation === "delete_branch") {
                 const { branches } = yield (0, api_1.getBranches)();
-                const existingBranch = (0, api_1.doesBranchExist)(branches, branchName);
-                if (existingBranch != null) {
-                    // console.log("Tagging existing DB branch for deletion...");
-                    // await updateBranch(existingBranch);
-                    // Need to check operations
-                    // Abstract a function to extract operations and for each keep pulling until it's finished.
-                    console.log("Deleting existing DB branch...");
-                    const data = yield (0, api_1.deleteBranch)(existingBranch);
-                    console.log("response from deleting branch: ", JSON.stringify(data, undefined, 2));
-                    yield (0, api_1.deleteBranchConfirmation)(existingBranch);
-                    console.log(`Deleted existing DB branch - { name: "${existingBranch.name}", id: "${existingBranch.id}" }`);
+                const branch = (0, api_1.doesBranchExist)(branches, branchName);
+                if (branch != null) {
+                    // TODO move into message helpers
+                    console.log(`Deleting existing DB branch...`);
+                    const { operations } = yield (0, api_1.deleteBranch)(branch);
+                    yield (0, api_1.completeAllOperations)(operations);
+                    console.log("Existing DB branch and relative endpoint succesfully deleted");
                 }
             }
             if (branchOperation === "create_branch") {
                 console.log("Creating new DB branch...");
-                const data = yield (0, api_1.createBranch)(branchName);
-                if (!(data === null || data === void 0 ? void 0 : data.branch) || !(data === null || data === void 0 ? void 0 : data.endpoint)) {
-                    throw new Error("something went wrong");
-                }
-                const { branch, endpoint } = data;
-                console.log(`Created new DB branch - { id: "${branch.id}", status: "${branch.current_state}" }`);
-                core.setOutput("host_url", endpoint.host);
-                core.setOutput("host_id", endpoint.id);
-                core.setOutput("branch_id", branch.id);
+                const { operations } = yield (0, api_1.createBranch)(branchName);
+                console.log("pending operations", JSON.stringify(operations, undefined, 2));
+                const results = yield (0, api_1.completeAllOperations)(operations);
+                console.log("results from completing all ops", JSON.stringify(results, undefined, 2));
+                // const newEndpoint = results.find(operation => operation.action === "")
+                // const newBranch = results.find(operation => operation.action === "")
+                // // const { branch, endpoint } = data;
+                // console.log(
+                //   `Created new DB branch - { id: "${branch.id!}", status: "${
+                //     branch.current_state
+                //   }" }`
+                // );
+                // core.setOutput("host_url", endpoint.host);
+                // core.setOutput("host_id", endpoint.id);
+                // core.setOutput("branch_id", branch.id);
             }
         }
         catch (error) {

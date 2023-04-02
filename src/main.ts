@@ -4,8 +4,7 @@ import {
   doesBranchExist,
   deleteBranch,
   createBranch,
-  updateBranch,
-  deleteBranchConfirmation,
+  completeAllOperations,
 } from "./api";
 import { sleep } from "./utils";
 
@@ -16,6 +15,7 @@ const apiKey = core.getInput("api_key");
 const projectId = core.getInput("project_id");
 
 async function run(): Promise<void> {
+  // TODO: move into validator utility
   if (!branchName || !branchOperation || !apiKey || !projectId) {
     core.setFailed("Missing required input");
     return;
@@ -27,43 +27,44 @@ async function run(): Promise<void> {
       branchOperation === "delete_branch"
     ) {
       const { branches } = await getBranches();
-      const existingBranch = doesBranchExist(branches, branchName);
+      const branch = doesBranchExist(branches, branchName);
 
-      if (existingBranch != null) {
-        // console.log("Tagging existing DB branch for deletion...");
-        // await updateBranch(existingBranch);
-        // Need to check operations
-        // Abstract a function to extract operations and for each keep pulling until it's finished.
-        console.log("Deleting existing DB branch...");
-        const data = await deleteBranch(existingBranch);
+      if (branch != null) {
+        // TODO move into message helpers
+        console.log(`Deleting existing DB branch...`);
+        const { operations } = await deleteBranch(branch);
+        await completeAllOperations(operations);
         console.log(
-          "response from deleting branch: ",
-          JSON.stringify(data, undefined, 2)
-        );
-        await deleteBranchConfirmation(existingBranch);
-        console.log(
-          `Deleted existing DB branch - { name: "${existingBranch.name}", id: "${existingBranch.id}" }`
+          "Existing DB branch and relative endpoint succesfully deleted"
         );
       }
     }
 
     if (branchOperation === "create_branch") {
       console.log("Creating new DB branch...");
-      const data = await createBranch(branchName);
-      if (!data?.branch || !data?.endpoint) {
-        throw new Error("something went wrong");
-      }
-
-      const { branch, endpoint } = data;
+      const { operations } = await createBranch(branchName);
       console.log(
-        `Created new DB branch - { id: "${branch.id!}", status: "${
-          branch.current_state
-        }" }`
+        "pending operations",
+        JSON.stringify(operations, undefined, 2)
       );
+      const results = await completeAllOperations(operations);
+      console.log(
+        "results from completing all ops",
+        JSON.stringify(results, undefined, 2)
+      );
+      // const newEndpoint = results.find(operation => operation.action === "")
+      // const newBranch = results.find(operation => operation.action === "")
 
-      core.setOutput("host_url", endpoint.host);
-      core.setOutput("host_id", endpoint.id);
-      core.setOutput("branch_id", branch.id);
+      // // const { branch, endpoint } = data;
+      // console.log(
+      //   `Created new DB branch - { id: "${branch.id!}", status: "${
+      //     branch.current_state
+      //   }" }`
+      // );
+
+      // core.setOutput("host_url", endpoint.host);
+      // core.setOutput("host_id", endpoint.id);
+      // core.setOutput("branch_id", branch.id);
     }
   } catch (error: any) {
     core.setFailed(error.message);
