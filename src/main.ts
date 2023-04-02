@@ -43,13 +43,20 @@ async function run(): Promise<void> {
 
     if (branchOperation === "create_branch") {
       console.log("Creating new DB branch...");
-      const { branch, endpoints } = await createBranch(branchName);
+      const data = await createBranch(branchName);
+      if (!data?.branch || !data?.endpoint) {
+        throw new Error("something went wrong");
+      }
+
+      const { branch, endpoint } = data;
       console.log(
-        `Created new DB branch - { id: "${branch.id}", status: "${branch.current_state}" }`
+        `Created new DB branch - { id: "${branch.id!}", status: "${
+          branch.current_state
+        }" }`
       );
 
-      core.setOutput("host_url", endpoints[0].host);
-      core.setOutput("host_id", endpoints[0].id);
+      core.setOutput("host_url", endpoint.host);
+      core.setOutput("host_id", endpoint.id);
       core.setOutput("branch_id", branch.id);
     }
   } catch (error: any) {

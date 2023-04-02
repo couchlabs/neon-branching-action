@@ -51,6 +51,8 @@ const apiKey = core.getInput("api_key");
 const projectId = core.getInput("project_id");
 const branchName = core.getInput("branch_name");
 const BRANCHES_API_URL = `https://console.neon.tech/api/v2/projects/${projectId}/branches`;
+const OPERATATIONS_API_URL = `https://console.neon.tech/api/v2/projects/${projectId}/operations`;
+const ENDPOINTS_API_URL = `https://console.neon.tech/api/v2/projects/${projectId}/endpoints`;
 const API_OPTIONS = {
     headers: {
         "content-type": "application/json",
@@ -107,6 +109,27 @@ function updateBranch(branch) {
     });
 }
 exports.updateBranch = updateBranch;
+function getOperation(operation) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const response = yield (0, node_fetch_1.default)(`${OPERATATIONS_API_URL}/${operation.id}`, Object.assign({}, API_OPTIONS));
+            return response.json().then((data) => data);
+        }
+        catch (error) {
+            core.setFailed(error.message);
+            return { operation: { status: undefined } };
+        }
+    });
+}
+function operatoionConfirmation(creatingBranchOperation) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { operation } = yield getOperation(creatingBranchOperation);
+        if (operation.status != "finish") {
+            yield (0, utils_1.sleep)(2000);
+            yield operatoionConfirmation(creatingBranchOperation);
+        }
+    });
+}
 function createBranch(branchName) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -114,15 +137,46 @@ function createBranch(branchName) {
                     branch: { name: branchName },
                     endpoints: [{ type: "read_write" }],
                 }) }, API_OPTIONS));
-            return response.json().then((data) => data);
+            const { operations } = yield response
+                .json()
+                .then((data) => data);
+            const creatingBranchOperation = operations.find((operation) => operation.action === "create_branch");
+            if (creatingBranchOperation != null) {
+                yield operatoionConfirmation(creatingBranchOperation);
+            }
+            else {
+                throw new Error("Something went wrong when trying to create new branch");
+            }
+            const creatingEndpointOperation = operations.find((operation) => operation.action === "start_compute");
+            if (creatingEndpointOperation != null) {
+                yield operatoionConfirmation(creatingEndpointOperation);
+            }
+            else {
+                throw new Error("Something went wrong when trying to create new branch");
+            }
+            // get branch and get endpoint
+            const { branch } = yield getBranch(creatingBranchOperation.branch_id);
+            const { endpoint } = yield getEndpoint(creatingEndpointOperation.endpoint_id);
+            return { branch, endpoint };
         }
         catch (error) {
             core.setFailed(error.message);
-            return { branch: {}, endpoints: [] };
         }
     });
 }
 exports.createBranch = createBranch;
+function getBranch(branchId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const response = yield (0, node_fetch_1.default)(`${BRANCHES_API_URL}/${branchId}`, Object.assign({}, API_OPTIONS));
+        return response.json().then((data) => data);
+    });
+}
+function getEndpoint(endpointId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const response = yield (0, node_fetch_1.default)(`${ENDPOINTS_API_URL}/${endpointId}`, Object.assign({}, API_OPTIONS));
+        return response.json().then((data) => data);
+    });
+}
 function doesBranchExist(branches, branchName) {
     return branches.find((branch) => branch.name === branchName);
 }
@@ -198,10 +252,14 @@ function run() {
             }
             if (branchOperation === "create_branch") {
                 console.log("Creating new DB branch...");
-                const { branch, endpoints } = yield (0, api_1.createBranch)(branchName);
+                const data = yield (0, api_1.createBranch)(branchName);
+                if (!(data === null || data === void 0 ? void 0 : data.branch) || !(data === null || data === void 0 ? void 0 : data.endpoint)) {
+                    throw new Error("something went wrong");
+                }
+                const { branch, endpoint } = data;
                 console.log(`Created new DB branch - { id: "${branch.id}", status: "${branch.current_state}" }`);
-                core.setOutput("host_url", endpoints[0].host);
-                core.setOutput("host_id", endpoints[0].id);
+                core.setOutput("host_url", endpoint.host);
+                core.setOutput("host_id", endpoint.id);
                 core.setOutput("branch_id", branch.id);
             }
         }

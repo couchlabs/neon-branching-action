@@ -6,7 +6,18 @@ type Branch = { name?: string; id?: string; current_state?: string };
 type Endpoint = { host: string; id: string };
 type Branches = Array<Branch>;
 type BranchesResponse = { branches: Branches };
-type BranchResponse = { branch: Branch; endpoints: Endpoint[] };
+type Operation = {
+  id: string;
+  branch_id: string;
+  endpoint_id?: string;
+  action: string;
+  status: string;
+};
+type BranchResponse = {
+  branch: Branch;
+  endpoints: Endpoint[];
+  operations: Operation[];
+};
 
 // Action inputs, defined in action metadata file:
 const apiKey = core.getInput("api_key");
@@ -14,6 +25,8 @@ const projectId = core.getInput("project_id");
 const branchName = core.getInput("branch_name");
 
 const BRANCHES_API_URL = `https://console.neon.tech/api/v2/projects/${projectId}/branches`;
+const OPERATATIONS_API_URL = `https://console.neon.tech/api/v2/projects/${projectId}/operations`;
+const ENDPOINTS_API_URL = `https://console.neon.tech/api/v2/projects/${projectId}/endpoints`;
 const API_OPTIONS = {
   headers: {
     "content-type": "application/json",
@@ -66,6 +79,26 @@ async function updateBranch(branch: Branch) {
   }
 }
 
+async function getOperation(operation: Operation) {
+  try {
+    const response = await fetch(`${OPERATATIONS_API_URL}/${operation.id}`, {
+      ...API_OPTIONS,
+    });
+    return response.json().then((data) => data as { operation: Operation });
+  } catch (error: any) {
+    core.setFailed(error.message);
+    return { operation: { status: undefined } };
+  }
+}
+
+async function operatoionConfirmation(creatingBranchOperation: Operation) {
+  const { operation } = await getOperation(creatingBranchOperation);
+  if (operation.status != "finish") {
+    await sleep(2000);
+    await operatoionConfirmation(creatingBranchOperation);
+  }
+}
+
 async function createBranch(branchName: string) {
   try {
     const response = await fetch(BRANCHES_API_URL, {
@@ -76,11 +109,52 @@ async function createBranch(branchName: string) {
       }),
       ...API_OPTIONS,
     });
-    return response.json().then((data) => data as BranchResponse);
+    const { operations } = await response
+      .json()
+      .then((data) => data as BranchResponse);
+
+    const creatingBranchOperation = operations.find(
+      (operation) => operation.action === "create_branch"
+    );
+    if (creatingBranchOperation != null) {
+      await operatoionConfirmation(creatingBranchOperation);
+    } else {
+      throw new Error("Something went wrong when trying to create new branch");
+    }
+
+    const creatingEndpointOperation = operations.find(
+      (operation) => operation.action === "start_compute"
+    );
+    if (creatingEndpointOperation != null) {
+      await operatoionConfirmation(creatingEndpointOperation);
+    } else {
+      throw new Error("Something went wrong when trying to create new branch");
+    }
+
+    // get branch and get endpoint
+    const { branch } = await getBranch(creatingBranchOperation.branch_id);
+    const { endpoint } = await getEndpoint(
+      creatingEndpointOperation.endpoint_id!
+    );
+
+    return { branch, endpoint };
   } catch (error: any) {
     core.setFailed(error.message);
-    return { branch: {}, endpoints: [] };
   }
+}
+
+async function getBranch(branchId: string) {
+  const response = await fetch(`${BRANCHES_API_URL}/${branchId}`, {
+    ...API_OPTIONS,
+  });
+  return response.json().then((data) => data as { branch: Branch });
+}
+
+async function getEndpoint(endpointId: string) {
+  const response = await fetch(`${ENDPOINTS_API_URL}/${endpointId}`, {
+    ...API_OPTIONS,
+  });
+  return response.json().then((data) => data as { endpoint: Endpoint });
 }
 
 function doesBranchExist(branches: Branches, branchName: string) {
