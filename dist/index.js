@@ -42,12 +42,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.updateBranch = exports.doesBranchExist = exports.createBranch = exports.deleteBranch = exports.getBranches = void 0;
+exports.deleteBranchConfirmation = exports.updateBranch = exports.doesBranchExist = exports.createBranch = exports.deleteBranch = exports.getBranches = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const node_fetch_1 = __importDefault(__nccwpck_require__(4429));
+const utils_1 = __nccwpck_require__(918);
 // Action inputs, defined in action metadata file:
 const apiKey = core.getInput("api_key");
 const projectId = core.getInput("project_id");
+const branchName = core.getInput("branch_name");
 const BRANCHES_API_URL = `https://console.neon.tech/api/v2/projects/${projectId}/branches`;
 const API_OPTIONS = {
     headers: {
@@ -81,6 +83,17 @@ function deleteBranch(branch) {
     });
 }
 exports.deleteBranch = deleteBranch;
+function deleteBranchConfirmation(branch) {
+    var _a;
+    return __awaiter(this, void 0, void 0, function* () {
+        const { branches } = yield getBranches();
+        if (doesBranchExist(branches, (_a = branch.name) !== null && _a !== void 0 ? _a : branchName)) {
+            yield (0, utils_1.sleep)(2000);
+            yield deleteBranchConfirmation(branch);
+        }
+    });
+}
+exports.deleteBranchConfirmation = deleteBranchConfirmation;
 function updateBranch(branch) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -158,7 +171,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const api_1 = __nccwpck_require__(8947);
-const utils_1 = __nccwpck_require__(918);
 // Action inputs, defined in action metadata file:
 const branchName = core.getInput("branch_name");
 const branchOperation = core.getInput("branch_operation");
@@ -176,12 +188,12 @@ function run() {
                 const { branches } = yield (0, api_1.getBranches)();
                 const existingBranch = (0, api_1.doesBranchExist)(branches, branchName);
                 if (existingBranch != null) {
-                    console.log("Tagging existing DB branch for deletion...");
-                    yield (0, api_1.updateBranch)(existingBranch);
+                    // console.log("Tagging existing DB branch for deletion...");
+                    // await updateBranch(existingBranch);
                     console.log("Deleting existing DB branch...");
                     yield (0, api_1.deleteBranch)(existingBranch);
+                    yield (0, api_1.deleteBranchConfirmation)(existingBranch);
                     console.log(`Deleted existing DB branch - { name: "${existingBranch.name}", id: "${existingBranch.id}" }`);
-                    yield (0, utils_1.sleep)(5000);
                 }
             }
             if (branchOperation === "create_branch") {
