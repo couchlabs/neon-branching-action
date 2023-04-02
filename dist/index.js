@@ -181,18 +181,16 @@ function run() {
                     console.log("Deleting existing DB branch...");
                     yield (0, api_1.deleteBranch)(existingBranch);
                     console.log(`Deleted existing DB branch - { name: "${existingBranch.name}", id: "${existingBranch.id}" }`);
-                    yield (0, utils_1.sleep)(1000);
+                    yield (0, utils_1.sleep)(5000);
                 }
             }
             if (branchOperation === "create_branch") {
                 console.log("Creating new DB branch...");
-                // const { branch, endpoints } = await createBranch(branchName);
-                // console.log(
-                //   `Created new DB branch - { name: "${branch.name}", id: "${branch.id}", status: "${branch.pending_state}" }`
-                // );
-                // core.setOutput("host_url", endpoints[0].host);
-                // core.setOutput("host_id", endpoints[0].id);
-                // core.setOutput("branch_id", branch.id);
+                const { branch, endpoints } = yield (0, api_1.createBranch)(branchName);
+                console.log(`Created new DB branch - { name: "${branch.name}", id: "${branch.id}", status: "${branch.pending_state}" }`);
+                core.setOutput("host_url", endpoints[0].host);
+                core.setOutput("host_id", endpoints[0].id);
+                core.setOutput("branch_id", branch.id);
             }
         }
         catch (error) {
