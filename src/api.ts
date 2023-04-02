@@ -48,10 +48,11 @@ async function getBranches() {
 
 async function deleteBranch(branch: Branch) {
   try {
-    await fetch(`${BRANCHES_API_URL}/${branch.id}`, {
+    const data = await fetch(`${BRANCHES_API_URL}/${branch.id}`, {
       method: "DELETE",
       ...API_OPTIONS,
     });
+    return data.json();
   } catch (error: any) {
     core.setFailed(error.message);
   }
@@ -93,7 +94,7 @@ async function getOperation(operation: Operation) {
 
 async function operatoionConfirmation(creatingBranchOperation: Operation) {
   const { operation } = await getOperation(creatingBranchOperation);
-  console.log("operation", operation);
+  //   console.log("operation", operation);
   if (operation.status != "finished") {
     await sleep(2000);
     await operatoionConfirmation(creatingBranchOperation);
@@ -111,20 +112,20 @@ async function createBranch(branchName: string) {
       ...API_OPTIONS,
     });
     const { operations } = await response.json().then((data) => {
-      console.log("DATA", JSON.stringify(data, undefined, 2));
+      //   console.log("DATA", JSON.stringify(data, undefined, 2));
       return data as BranchResponse;
     });
 
-    console.log("oprations", JSON.stringify(operations, undefined, 2));
+    // console.log("oprations", JSON.stringify(operations, undefined, 2));
 
     const creatingBranchOperation = operations.find(
       (operation) => operation.action === "create_branch"
     );
     if (creatingBranchOperation != null) {
-      console.log(
-        "creatingBranchOperation",
-        JSON.stringify(creatingBranchOperation, undefined, 2)
-      );
+      //   console.log(
+      //     "creatingBranchOperation",
+      //     JSON.stringify(creatingBranchOperation, undefined, 2)
+      //   );
       if (creatingBranchOperation.status !== "finished") {
         await operatoionConfirmation(creatingBranchOperation);
       }
@@ -136,10 +137,10 @@ async function createBranch(branchName: string) {
       (operation) => operation.action === "start_compute"
     );
     if (creatingEndpointOperation != null) {
-      console.log(
-        "creatingEndpointOperation",
-        JSON.stringify(creatingEndpointOperation, undefined, 2)
-      );
+      //   console.log(
+      //     "creatingEndpointOperation",
+      //     JSON.stringify(creatingEndpointOperation, undefined, 2)
+      //   );
       if (creatingEndpointOperation.status !== "finished") {
         await operatoionConfirmation(creatingEndpointOperation);
       }

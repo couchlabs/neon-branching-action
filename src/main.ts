@@ -30,10 +30,16 @@ async function run(): Promise<void> {
       const existingBranch = doesBranchExist(branches, branchName);
 
       if (existingBranch != null) {
-        console.log("Tagging existing DB branch for deletion...");
-        await updateBranch(existingBranch);
+        // console.log("Tagging existing DB branch for deletion...");
+        // await updateBranch(existingBranch);
+        // Need to check operations
+        // Abstract a function to extract operations and for each keep pulling until it's finished.
         console.log("Deleting existing DB branch...");
-        await deleteBranch(existingBranch);
+        const data = await deleteBranch(existingBranch);
+        console.log(
+          "response from deleting branch: ",
+          JSON.stringify(data, undefined, 2)
+        );
         await deleteBranchConfirmation(existingBranch);
         console.log(
           `Deleted existing DB branch - { name: "${existingBranch.name}", id: "${existingBranch.id}" }`

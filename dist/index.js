@@ -77,7 +77,8 @@ exports.getBranches = getBranches;
 function deleteBranch(branch) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield (0, node_fetch_1.default)(`${BRANCHES_API_URL}/${branch.id}`, Object.assign({ method: "DELETE" }, API_OPTIONS));
+            const data = yield (0, node_fetch_1.default)(`${BRANCHES_API_URL}/${branch.id}`, Object.assign({ method: "DELETE" }, API_OPTIONS));
+            return data.json();
         }
         catch (error) {
             core.setFailed(error.message);
@@ -124,7 +125,7 @@ function getOperation(operation) {
 function operatoionConfirmation(creatingBranchOperation) {
     return __awaiter(this, void 0, void 0, function* () {
         const { operation } = yield getOperation(creatingBranchOperation);
-        console.log("operation", operation);
+        //   console.log("operation", operation);
         if (operation.status != "finished") {
             yield (0, utils_1.sleep)(2000);
             yield operatoionConfirmation(creatingBranchOperation);
@@ -139,13 +140,16 @@ function createBranch(branchName) {
                     endpoints: [{ type: "read_write" }],
                 }) }, API_OPTIONS));
             const { operations } = yield response.json().then((data) => {
-                console.log("DATA", JSON.stringify(data, undefined, 2));
+                //   console.log("DATA", JSON.stringify(data, undefined, 2));
                 return data;
             });
-            console.log("oprations", JSON.stringify(operations, undefined, 2));
+            // console.log("oprations", JSON.stringify(operations, undefined, 2));
             const creatingBranchOperation = operations.find((operation) => operation.action === "create_branch");
             if (creatingBranchOperation != null) {
-                console.log("creatingBranchOperation", JSON.stringify(creatingBranchOperation, undefined, 2));
+                //   console.log(
+                //     "creatingBranchOperation",
+                //     JSON.stringify(creatingBranchOperation, undefined, 2)
+                //   );
                 if (creatingBranchOperation.status !== "finished") {
                     yield operatoionConfirmation(creatingBranchOperation);
                 }
@@ -155,7 +159,10 @@ function createBranch(branchName) {
             }
             const creatingEndpointOperation = operations.find((operation) => operation.action === "start_compute");
             if (creatingEndpointOperation != null) {
-                console.log("creatingEndpointOperation", JSON.stringify(creatingEndpointOperation, undefined, 2));
+                //   console.log(
+                //     "creatingEndpointOperation",
+                //     JSON.stringify(creatingEndpointOperation, undefined, 2)
+                //   );
                 if (creatingEndpointOperation.status !== "finished") {
                     yield operatoionConfirmation(creatingEndpointOperation);
                 }
@@ -251,10 +258,13 @@ function run() {
                 const { branches } = yield (0, api_1.getBranches)();
                 const existingBranch = (0, api_1.doesBranchExist)(branches, branchName);
                 if (existingBranch != null) {
-                    console.log("Tagging existing DB branch for deletion...");
-                    yield (0, api_1.updateBranch)(existingBranch);
+                    // console.log("Tagging existing DB branch for deletion...");
+                    // await updateBranch(existingBranch);
+                    // Need to check operations
+                    // Abstract a function to extract operations and for each keep pulling until it's finished.
                     console.log("Deleting existing DB branch...");
-                    yield (0, api_1.deleteBranch)(existingBranch);
+                    const data = yield (0, api_1.deleteBranch)(existingBranch);
+                    console.log("response from deleting branch: ", JSON.stringify(data, undefined, 2));
                     yield (0, api_1.deleteBranchConfirmation)(existingBranch);
                     console.log(`Deleted existing DB branch - { name: "${existingBranch.name}", id: "${existingBranch.id}" }`);
                 }
