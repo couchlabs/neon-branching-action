@@ -124,6 +124,7 @@ function getOperation(operation) {
 function operatoionConfirmation(creatingBranchOperation) {
     return __awaiter(this, void 0, void 0, function* () {
         const { operation } = yield getOperation(creatingBranchOperation);
+        console.log("operation", operation);
         if (operation.status != "finish") {
             yield (0, utils_1.sleep)(2000);
             yield operatoionConfirmation(creatingBranchOperation);
@@ -140,8 +141,10 @@ function createBranch(branchName) {
             const { operations } = yield response
                 .json()
                 .then((data) => data);
+            console.log("oprations", JSON.stringify(operations, undefined, 2));
             const creatingBranchOperation = operations.find((operation) => operation.action === "create_branch");
             if (creatingBranchOperation != null) {
+                console.log("creatingBranchOperation", JSON.stringify(creatingBranchOperation, undefined, 2));
                 yield operatoionConfirmation(creatingBranchOperation);
             }
             else {
@@ -149,6 +152,7 @@ function createBranch(branchName) {
             }
             const creatingEndpointOperation = operations.find((operation) => operation.action === "start_compute");
             if (creatingEndpointOperation != null) {
+                console.log("creatingEndpointOperation", JSON.stringify(creatingEndpointOperation, undefined, 2));
                 yield operatoionConfirmation(creatingEndpointOperation);
             }
             else {

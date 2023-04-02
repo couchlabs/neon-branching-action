@@ -93,6 +93,7 @@ async function getOperation(operation: Operation) {
 
 async function operatoionConfirmation(creatingBranchOperation: Operation) {
   const { operation } = await getOperation(creatingBranchOperation);
+  console.log("operation", operation);
   if (operation.status != "finish") {
     await sleep(2000);
     await operatoionConfirmation(creatingBranchOperation);
@@ -113,10 +114,16 @@ async function createBranch(branchName: string) {
       .json()
       .then((data) => data as BranchResponse);
 
+    console.log("oprations", JSON.stringify(operations, undefined, 2));
+
     const creatingBranchOperation = operations.find(
       (operation) => operation.action === "create_branch"
     );
     if (creatingBranchOperation != null) {
+      console.log(
+        "creatingBranchOperation",
+        JSON.stringify(creatingBranchOperation, undefined, 2)
+      );
       await operatoionConfirmation(creatingBranchOperation);
     } else {
       throw new Error("Something went wrong when trying to create new branch");
@@ -126,6 +133,10 @@ async function createBranch(branchName: string) {
       (operation) => operation.action === "start_compute"
     );
     if (creatingEndpointOperation != null) {
+      console.log(
+        "creatingEndpointOperation",
+        JSON.stringify(creatingEndpointOperation, undefined, 2)
+      );
       await operatoionConfirmation(creatingEndpointOperation);
     } else {
       throw new Error("Something went wrong when trying to create new branch");
