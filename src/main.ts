@@ -61,6 +61,9 @@ async function run(): Promise<void> {
         getEndpoint(newEndpoint.endpoint_id!),
       ]);
 
+      console.log("branch-details", JSON.stringify(branch, undefined, 2));
+      console.log("endpoint-details", JSON.stringify(endpoint, undefined, 2));
+
       core.setOutput("host_url", endpoint.host);
       core.setOutput("host_id", endpoint.id);
       core.setOutput("branch_id", branch.id);

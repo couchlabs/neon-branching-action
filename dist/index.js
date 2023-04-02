@@ -233,6 +233,8 @@ function run() {
                     (0, api_1.getBranch)(newBranch.id),
                     (0, api_1.getEndpoint)(newEndpoint.endpoint_id),
                 ]);
+                console.log("branch-details", JSON.stringify(branch, undefined, 2));
+                console.log("endpoint-details", JSON.stringify(endpoint, undefined, 2));
                 core.setOutput("host_url", endpoint.host);
                 core.setOutput("host_id", endpoint.id);
                 core.setOutput("branch_id", branch.id);
