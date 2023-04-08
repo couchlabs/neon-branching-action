@@ -16,7 +16,7 @@ jobs:
           api_key: ${{ secrets.NEON_API_KEY }}
           project_id: ${{ secrets.NEON_PROJECT_ID }}
           branch_name: ${{ steps.get_pull_request_sha.outputs.pull_request_sha }}
-          branch_operation: "create_branch" # Alternative you can use "delete_branch"
+          branch_operation: "create_branch" # Alternative you can use "delete_branch" or "promote_branch"
         id: create-branch
       - run: |
           echo "branch_id: ${{ steps.preview_branch_db.outputs.branch_id }}"
@@ -37,6 +37,12 @@ outputs:
     description: "Host URL for the newly created branch"
     value: ${{ steps.output-project-id.outputs.host_url }}
 ```
+
+## Supported Actions
+- create_branch
+- delete_branch
+- promote_branch
+
 
 ## How to set up the NEON_API_KEY
 Navigate to you the Account page on your Neon console. In the Developer Settings, Generate a new API key if you don't have one already. 
