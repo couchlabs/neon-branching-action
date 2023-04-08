@@ -25,6 +25,10 @@ type DeleteBranchResponse = {
   branch: Branch;
   operations: Operations;
 };
+type PromoteBranchResponse = {
+  branch: Branch;
+  operations: Operations;
+};
 type GetOperationResponse = {
   operation: Operation;
 };
@@ -92,6 +96,15 @@ async function deleteBranch(branch: Branch) {
   return data.json().then((data) => data as DeleteBranchResponse);
 }
 
+// Promote a specific branch
+async function promoteBranch(branch: Branch) {
+  const data = await fetch(`${BRANCHES_API_URL}/${branch.id}/set_as_primary`, {
+    method: "POST",
+    ...API_OPTIONS,
+  });
+  return data.json().then((data) => data as PromoteBranchResponse);
+}
+
 // Operations functions
 // ====================
 // Return a promise fulfilling when all the operations are finished
@@ -133,6 +146,7 @@ export {
   getBranches,
   deleteBranch,
   createBranch,
+  promoteBranch,
   doesBranchExist,
   completeAllOperations,
 };

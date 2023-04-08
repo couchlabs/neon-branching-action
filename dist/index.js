@@ -42,7 +42,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.completeAllOperations = exports.doesBranchExist = exports.createBranch = exports.deleteBranch = exports.getBranches = exports.getEndpoint = exports.getBranch = exports.OperationAction = void 0;
+exports.completeAllOperations = exports.doesBranchExist = exports.promoteBranch = exports.createBranch = exports.deleteBranch = exports.getBranches = exports.getEndpoint = exports.getBranch = exports.OperationAction = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const node_fetch_1 = __importDefault(__nccwpck_require__(4429));
 const utils_1 = __nccwpck_require__(918);
@@ -107,6 +107,14 @@ function deleteBranch(branch) {
     });
 }
 exports.deleteBranch = deleteBranch;
+// Promote a specific branch
+function promoteBranch(branch) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const data = yield (0, node_fetch_1.default)(`${BRANCHES_API_URL}/${branch.id}/set_as_primary`, Object.assign({ method: "POST" }, API_OPTIONS));
+        return data.json().then((data) => data);
+    });
+}
+exports.promoteBranch = promoteBranch;
 // Operations functions
 // ====================
 // Return a promise fulfilling when all the operations are finished
@@ -195,36 +203,54 @@ const branchName = (0, utils_1.notNull)(core.getInput("branch_name"));
 const branchOperation = (0, utils_1.notNull)(core.getInput("branch_operation"));
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        try {
-            if (branchOperation === "create_branch" ||
-                branchOperation === "delete_branch") {
+        if (branchOperation === "create_branch" ||
+            branchOperation === "delete_branch") {
+            try {
+                if (branchOperation === "create_branch" ||
+                    branchOperation === "delete_branch") {
+                    const { branches } = yield (0, api_1.getBranches)();
+                    const branch = (0, api_1.doesBranchExist)(branches, branchName);
+                    if (branch != null) {
+                        console.log(messages_1.Actions.BRANCH_DELETING);
+                        const { operations } = yield (0, api_1.deleteBranch)(branch);
+                        yield (0, api_1.completeAllOperations)(operations);
+                        console.log(messages_1.Actions.BRANCH_DELETED);
+                    }
+                }
+                if (branchOperation === "create_branch") {
+                    console.log(messages_1.Actions.BRANCH_CREATING);
+                    const { operations } = yield (0, api_1.createBranch)(branchName);
+                    const results = yield (0, api_1.completeAllOperations)(operations);
+                    console.log(messages_1.Actions.BRANCH_CREATED);
+                    const newBranch = (0, utils_1.notNull)(results.find((op) => op.action === api_1.OperationAction.CREATE_BRANCH));
+                    const newEndpoint = (0, utils_1.notNull)(results.find((op) => op.action === api_1.OperationAction.START_COMPUTE));
+                    const [{ branch }, { endpoint }] = yield Promise.all([
+                        (0, api_1.getBranch)(newBranch.branch_id),
+                        (0, api_1.getEndpoint)(newEndpoint.endpoint_id),
+                    ]);
+                    core.setOutput("host_url", endpoint.host);
+                    core.setOutput("host_id", endpoint.id);
+                    core.setOutput("branch_id", branch.id);
+                }
+            }
+            catch (error) {
+                core.setFailed(error.message);
+            }
+        }
+        if (branchOperation === "promote_branch") {
+            try {
                 const { branches } = yield (0, api_1.getBranches)();
                 const branch = (0, api_1.doesBranchExist)(branches, branchName);
                 if (branch != null) {
-                    console.log(messages_1.Actions.BRANCH_DELETING);
-                    const { operations } = yield (0, api_1.deleteBranch)(branch);
+                    console.log(messages_1.Actions.BRANCH_PROMOTING);
+                    const { operations } = yield (0, api_1.promoteBranch)(branch);
                     yield (0, api_1.completeAllOperations)(operations);
-                    console.log(messages_1.Actions.BRANCH_DELETED);
+                    console.log(messages_1.Actions.BRANCH_PROMOTED);
                 }
             }
-            if (branchOperation === "create_branch") {
-                console.log(messages_1.Actions.BRANCH_CREATING);
-                const { operations } = yield (0, api_1.createBranch)(branchName);
-                const results = yield (0, api_1.completeAllOperations)(operations);
-                console.log(messages_1.Actions.BRANCH_CREATED);
-                const newBranch = (0, utils_1.notNull)(results.find((op) => op.action === api_1.OperationAction.CREATE_BRANCH));
-                const newEndpoint = (0, utils_1.notNull)(results.find((op) => op.action === api_1.OperationAction.START_COMPUTE));
-                const [{ branch }, { endpoint }] = yield Promise.all([
-                    (0, api_1.getBranch)(newBranch.branch_id),
-                    (0, api_1.getEndpoint)(newEndpoint.endpoint_id),
-                ]);
-                core.setOutput("host_url", endpoint.host);
-                core.setOutput("host_id", endpoint.id);
-                core.setOutput("branch_id", branch.id);
+            catch (error) {
+                core.setFailed(error.message);
             }
-        }
-        catch (error) {
-            core.setFailed(error.message);
         }
     });
 }
@@ -246,6 +272,8 @@ var Actions;
     Actions["BRANCH_DELETED"] = "Existing DB branch and endpoint succesfully deleted";
     Actions["BRANCH_CREATING"] = "Creating new DB branch...";
     Actions["BRANCH_CREATED"] = "New DB branch and endpoint succesfully created";
+    Actions["BRANCH_PROMOTING"] = "Promoting release DB branch...";
+    Actions["BRANCH_PROMOTED"] = "Release DB branch succesfully promoted as primary branch";
 })(Actions = exports.Actions || (exports.Actions = {}));
 
 
